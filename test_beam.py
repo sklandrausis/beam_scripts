@@ -3,8 +3,17 @@ from astropy.time import Time
 
 import astropy.units as u
 import numpy as np
-from getDynspecBeam import *
+from getDynspecBeam import getBeamPower, mydb
 from skycal import get_sky, interpolate_beam
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+import h5py
+
+import sys
+
+#based Maaijke Mevius
 
 
 def radec_to_xyz(ra, dec, time, location):
@@ -38,11 +47,11 @@ def radec_to_xyz(ra, dec, time, location):
     return pointing_xyz
 
 
-station = "CS002LBA"
-rcumode = "outer"
-cs002 = mydb.phase_centres[station]
+station = "LV614LBA"
+rcumode = 3
+LV614 = mydb.phase_centres[station]
 
-ref_pos = EarthLocation.from_geocentric(*cs002, unit=u.m)
+ref_pos = EarthLocation.from_geocentric(*LV614, unit=u.m)
 latlonel = [ref_pos.lat.rad, ref_pos.lon.rad, ref_pos.height.value]
 
 az = np.linspace(0, 355, 36)
@@ -53,18 +62,66 @@ azel = AltAz(
     location=ref_pos,
 )
 
-
 phasedir = SkyCoord.from_name("CAS A")
-times = Time.now() + np.arange(10) * u.min
+times = Time("2025-08-02T13:00:00") + np.arange(12*60) * u.min
 
-freqs = np.linspace(40e6, 60e6,3) * u.Hz
+#times = times[::50]
+
+coordinates_of_lofar = EarthLocation(x=3183318.032280000 * u.m, y=1276777.654760000*u.m, z=5359435.077 * u.m)
+
+ra = "23h23m26.0s"
+dec = "+58d48m41s"
+
+source_ = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0')
+frame = AltAz(obstime=times, location=coordinates_of_lofar)
+elevation_azimuth = source_.transform_to(frame)
+elevation = elevation_azimuth.alt
+
+subband_min = 150
+subband_max = 311
+freqs = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min)
+freqs = freqs * u.MHz
+freqs = freqs.to("Hz")
 
 dynspec, distance_phase_center, distance_dir = getBeamPower(
     station, rcumode, azel.flatten(), phasedir, times, freqs
 )
-skypower =np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x time x points
+skypower = np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x time x points
 # make sure the beampattern (dynspec) has the same grid as skypower
+
+
 beampower, new_az, new_zenith = interpolate_beam(dynspec.reshape(dynspec.shape[:-1] + azel.az.shape), 90-el, az)
 beampower /= np.sum(beampower,axis=-1, keepdims=True)
 
-noise_power = np.sum( beampower * skypower , axis=-1)
+noise_power = np.sum(beampower * skypower , axis=-1)
+
+#'''
+fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+index = 0
+for time in times:
+    ax1.plot(freqs, noise_power[:, index], label=str(time))
+    index += 1
+
+ax1.set_xlabel("Frequencies [Hz]")
+ax1.set_ylabel("Power [K]")
+ax1.legend()
+
+fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+im1 = ax2.imshow(np.flip(noise_power.T, axis=0), aspect="auto", extent=[freqs[0].value, freqs[-1].value,
+                                                                  elevation[-1].value, elevation[0].value])
+ax2.set_xlabel("Frequencies [Hz]")
+ax2.set_ylabel("Elevation [Deg]")
+
+divider = make_axes_locatable(ax2)
+cax1 = divider.append_axes("right", size="5%", pad=0.07, label="K")
+plt.colorbar(im1, ax=ax2, cax=cax1, label="K")
+
+plt.show()
+#'''
+
+noise_power_output = h5py.File("noise_power.h5", "w")
+noise_power_output.create_dataset("elevation", data=elevation.value)
+noise_power_output.create_dataset("Frequencies", data=freqs.value)
+noise_power_output.create_dataset("noise_power", data=noise_power)
+noise_power_output.close()
+

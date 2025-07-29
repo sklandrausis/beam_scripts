@@ -1,27 +1,17 @@
 import numpy as np
-
-#based on code by P.Kruger and ...
+#based on code by P.Kruger and Maaijke Mevius
 if True:
     from pygdsm import LFSMObserver as GSMObserver
     NSIDE=256
 
 
 import healpy as hp
-import matplotlib.pyplot as plt
-from astropy import units as u
-
 from astropy.time import Time
-
-
-from os import listdir
-from os.path import isfile,join
-from time import sleep
-
-from tqdm import tqdm  
 
 
 from astropy.utils.iers import conf
 conf.auto_max_age = None
+
 def sphere2cart(theta,phi):
     '''
     convert spherical coordinates to cartesian unit coordinates
@@ -72,11 +62,11 @@ def get_coord(nside=NSIDE,plot=False):
 
 
 def get_sky(dates,freqs,latlonel):
-    (latitude, longitude, elevation) = latlonel
+    (latitude, longitude, height) = latlonel
     ov = GSMObserver()
     ov.lon = longitude
     ov.lat = latitude
-    ov.elev = elevation
+    ov.elev = height
     skys = []
     # from ov: Rotation is quite slow, only recompute if time has changed, or it has never been run
     for date0 in dates:
@@ -84,7 +74,9 @@ def get_sky(dates,freqs,latlonel):
         skys.append([])
         for freq in freqs:
             print (f"adding{freq.to('MHz')}")
-            skys[-1].append(ov.generate(freq.to("MHz").value,obstime=Time(date0)))
+            power = ov.generate(freq.to("MHz").value,obstime=Time(date0))
+            skys[-1].append(power)
+            #ov.view(logged=True, title=str(freq.to("MHz")) + "_" + str(date0), show=False)
     del ov
     return skys
             

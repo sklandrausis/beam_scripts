@@ -1,6 +1,5 @@
 import numpy as np
-from astropy.time import Time
-from astropy.coordinates import ITRS, SkyCoord, EarthLocation, AltAz
+from astropy.coordinates import ITRS, EarthLocation, AltAz
 import astropy.units as u
 from astropy.constants import c
 
@@ -10,13 +9,15 @@ import casacore.tables as pt
 import lofarantpos.geo as lofargeo
 from lofarantpos.db import LofarAntennaDatabase
 
+#based Maaijke Mevius
+
 mydb = LofarAntennaDatabase()
-cs002lba = mydb.phase_centres["CS002LBA"]
-etrs_to_pqr = mydb.pqr_to_etrs["CS002LBA"].T
+LV614lba = mydb.phase_centres["LV614LBA"]
+etrs_to_pqr = mydb.pqr_to_etrs["LV614LBA"].T
 
 def get_global_pqr(station_name):
     phase_centre = mydb.phase_centres[station_name]
-    return etrs_to_pqr @ (phase_centre - cs002lba)
+    return etrs_to_pqr @ (phase_centre - LV614lba)
 
 def get_missing_elements(MSname, station):
     myt = pt.table(f"{MSname}/LOFAR_ANTENNA_FIELD", ack=False)
