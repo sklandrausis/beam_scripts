@@ -9,8 +9,6 @@ import casacore.tables as pt
 import lofarantpos.geo as lofargeo
 from lofarantpos.db import LofarAntennaDatabase
 
-#based Maaijke Mevius
-
 mydb = LofarAntennaDatabase()
 LV614lba = mydb.phase_centres["LV614LBA"]
 etrs_to_pqr = mydb.pqr_to_etrs["LV614LBA"].T

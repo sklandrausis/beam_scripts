@@ -13,8 +13,6 @@ import h5py
 
 import sys
 
-#based Maaijke Mevius
-
 
 def radec_to_xyz(ra, dec, time, location):
     """Convert ra and dec coordinates to ITRS coordinates for LOFAR observations.
@@ -62,15 +60,19 @@ azel = AltAz(
     location=ref_pos,
 )
 
-phasedir = SkyCoord.from_name("CAS A")
-times = Time("2025-08-02T13:00:00") + np.arange(12*60) * u.min
+phasedir = SkyCoord.from_name("3C147")
+times = Time("2025-07-18T20:30:00") + np.arange(12*60) * u.min
 
-#times = times[::50]
+
+times = times[::30]
+
+print(times[0], times[1], times[-1], len(times))
+
 
 coordinates_of_lofar = EarthLocation(x=3183318.032280000 * u.m, y=1276777.654760000*u.m, z=5359435.077 * u.m)
 
-ra = "23h23m26.0s"
-dec = "+58d48m41s"
+ra = "05h42m36.13789710s"
+dec = "+49d51m07.2337139s"
 
 source_ = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0')
 frame = AltAz(obstime=times, location=coordinates_of_lofar)
@@ -95,7 +97,7 @@ beampower /= np.sum(beampower,axis=-1, keepdims=True)
 
 noise_power = np.sum(beampower * skypower , axis=-1)
 
-#'''
+'''
 fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 index = 0
 for time in times:
@@ -117,9 +119,9 @@ cax1 = divider.append_axes("right", size="5%", pad=0.07, label="K")
 plt.colorbar(im1, ax=ax2, cax=cax1, label="K")
 
 plt.show()
-#'''
+'''
 
-noise_power_output = h5py.File("noise_power.h5", "w")
+noise_power_output = h5py.File("/mnt/LOFAR0/noise_power.h5", "w")
 noise_power_output.create_dataset("elevation", data=elevation.value)
 noise_power_output.create_dataset("Frequencies", data=freqs.value)
 noise_power_output.create_dataset("noise_power", data=noise_power)

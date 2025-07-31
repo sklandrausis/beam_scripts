@@ -1,5 +1,5 @@
 import numpy as np
-#based on code by P.Kruger and Maaijke Mevius
+#based on code by P.Kruger and ...
 if True:
     from pygdsm import LFSMObserver as GSMObserver
     NSIDE=256
