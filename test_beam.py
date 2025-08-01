@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import h5py
-
 import sys
 
+#based on code by Maaijke Mevius orginal code https://github.com/maaijke/beam_scripts
 
 def radec_to_xyz(ra, dec, time, location):
     """Convert ra and dec coordinates to ITRS coordinates for LOFAR observations.
@@ -63,11 +63,8 @@ azel = AltAz(
 phasedir = SkyCoord.from_name("3C147")
 times = Time("2025-07-18T20:30:00") + np.arange(12*60) * u.min
 
-
 times = times[::30]
-
 print(times[0], times[1], times[-1], len(times))
-
 
 coordinates_of_lofar = EarthLocation(x=3183318.032280000 * u.m, y=1276777.654760000*u.m, z=5359435.077 * u.m)
 
@@ -91,13 +88,11 @@ dynspec, distance_phase_center, distance_dir = getBeamPower(
 skypower = np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x time x points
 # make sure the beampattern (dynspec) has the same grid as skypower
 
-
 beampower, new_az, new_zenith = interpolate_beam(dynspec.reshape(dynspec.shape[:-1] + azel.az.shape), 90-el, az)
 beampower /= np.sum(beampower,axis=-1, keepdims=True)
 
 noise_power = np.sum(beampower * skypower , axis=-1)
 
-'''
 fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 index = 0
 for time in times:
@@ -119,7 +114,6 @@ cax1 = divider.append_axes("right", size="5%", pad=0.07, label="K")
 plt.colorbar(im1, ax=ax2, cax=cax1, label="K")
 
 plt.show()
-'''
 
 noise_power_output = h5py.File("/mnt/LOFAR0/noise_power.h5", "w")
 noise_power_output.create_dataset("elevation", data=elevation.value)
@@ -127,3 +121,4 @@ noise_power_output.create_dataset("Frequencies", data=freqs.value)
 noise_power_output.create_dataset("noise_power", data=noise_power)
 noise_power_output.close()
 
+sys.exit(0)

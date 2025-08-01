@@ -1,5 +1,7 @@
 import numpy as np
-#based on code by P.Kruger and ...
+from tqdm import tqdm
+
+#based on code by P.Kruger and Maaijke Mevius orginal code https://github.com/maaijke/beam_scripts
 if True:
     from pygdsm import LFSMObserver as GSMObserver
     NSIDE=256
@@ -148,11 +150,11 @@ def CalcPower(freq,latlonel,dates,beamsky):
         print ("power",x,pwr[:,x],beamsky.shape)
         pwr[1,x]=np.sum( ov.observed_sky*beamsky[1])
         print ("power",x,pwr[:,x])
-    del ov;
-    return pwr;
+    del ov
+    return pwr
 
 def CalcPowerN(freq,latlonel,dates,beamsky):
-    Nlba=beamsky[0].shape[0];
+    Nlba=beamsky[0].shape[0]
     print(Nlba)
     (latitude, longitude, elevation) = latlonel
     Ntime=len(dates)
@@ -169,6 +171,6 @@ def CalcPowerN(freq,latlonel,dates,beamsky):
         for i in range(Nlba):
             pwr[i,0,x]=np.sum( ov.observed_sky*beamsky[0][i]/np.sum(beamsky[0][i]))
             pwr[i,1,x]=np.sum( ov.observed_sky*beamsky[1][i]/np.sum(beamsky[0][i]))
-    del ov;
-    return pwr;
+    del ov
+    return pwr
 
