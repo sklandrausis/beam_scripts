@@ -145,7 +145,7 @@ def CalcPower(freq,latlonel,dates,beamsky):
     ov.elev = elevation
     for x,date0 in  tqdm(enumerate(dates)):
         ov.date = date0
-        ov.generate(freq.to("MHz").value,obstime=Time(date0))    
+        ov.generate(freq.to("MHz").value,obstime=Time(date0))
         pwr[0,x]=np.sum( ov.observed_sky*beamsky[0])
         print ("power",x,pwr[:,x],beamsky.shape)
         pwr[1,x]=np.sum( ov.observed_sky*beamsky[1])
