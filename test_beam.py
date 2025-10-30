@@ -12,6 +12,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import h5py
 import sys
 
+
 #based on code by Maaijke Mevius orginal code https://github.com/maaijke/beam_scripts
 
 def radec_to_xyz(ra, dec, time, location):
@@ -60,8 +61,8 @@ azel = AltAz(
     location=ref_pos,
 )
 
-phasedir = SkyCoord.from_name("3C147")
-times = Time("2025-07-18T20:30:00") + np.arange(12*60) * u.min
+phasedir = SkyCoord.from_name("3C295")
+times = Time("2025-01-02T14:59:16") + np.arange(800) * u.min
 
 times = times[::30]
 print(times[0], times[1], times[-1], len(times))
@@ -85,11 +86,13 @@ freqs = freqs.to("Hz")
 dynspec, distance_phase_center, distance_dir = getBeamPower(
     station, rcumode, azel.flatten(), phasedir, times, freqs
 )
-skypower = np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x time x points
-# make sure the beampattern (dynspec) has the same grid as skypower
+
 
 beampower, new_az, new_zenith = interpolate_beam(dynspec.reshape(dynspec.shape[:-1] + azel.az.shape), 90-el, az)
 beampower /= np.sum(beampower,axis=-1, keepdims=True)
+
+skypower = np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x time x points
+
 
 noise_power = np.sum(beampower * skypower , axis=-1)
 
