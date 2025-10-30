@@ -6,9 +6,6 @@ import numpy as np
 from getDynspecBeam import getBeamPower, mydb
 from skycal import get_sky, interpolate_beam
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-
 import h5py
 import sys
 
@@ -61,16 +58,16 @@ azel = AltAz(
     location=ref_pos,
 )
 
-phasedir = SkyCoord.from_name("3C295")
-times = Time("2025-01-02T14:59:16") + np.arange(800) * u.min
+phasedir = SkyCoord.from_name("CAS A")
+times = Time("2025-07-18T14:00:00") + np.arange(12*60) * u.min
 
 times = times[::30]
 print(times[0], times[1], times[-1], len(times))
 
 coordinates_of_lofar = EarthLocation(x=3183318.032280000 * u.m, y=1276777.654760000*u.m, z=5359435.077 * u.m)
 
-ra = "05h42m36.13789710s"
-dec = "+49d51m07.2337139s"
+ra = "23h23m26.0s"
+dec = "+58d48m41s"
 
 source_ = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0')
 frame = AltAz(obstime=times, location=coordinates_of_lofar)
@@ -79,7 +76,7 @@ elevation = elevation_azimuth.alt
 
 subband_min = 150
 subband_max = 311
-freqs = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min)
+freqs = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min + 1)
 freqs = freqs * u.MHz
 freqs = freqs.to("Hz")
 
@@ -96,6 +93,7 @@ skypower = np.array(get_sky(times, freqs, latlonel)).swapaxes(0,1)  # freq x tim
 
 noise_power = np.sum(beampower * skypower , axis=-1)
 
+'''
 fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 index = 0
 for time in times:
@@ -117,6 +115,7 @@ cax1 = divider.append_axes("right", size="5%", pad=0.07, label="K")
 plt.colorbar(im1, ax=ax2, cax=cax1, label="K")
 
 plt.show()
+'''
 
 noise_power_output = h5py.File("/mnt/LOFAR0/noise_power.h5", "w")
 noise_power_output.create_dataset("elevation", data=elevation.value)
