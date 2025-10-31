@@ -1,3 +1,5 @@
+import sys
+
 from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
@@ -73,7 +75,6 @@ def model_flux(calibrator, frequency, sun_true=False):
     else:
         return flux_model
 
-obs_time = Time('2025-01-02T14:59:16')
 station = "LV614LBA"
 rcumode = 3
 LV614 = mydb.phase_centres[station]
@@ -90,9 +91,8 @@ freqs_ = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - 
 freqs = freqs_ * 1000000
 
 phasedir = SkyCoord.from_name("3C295")
-
-start = datetime.strptime("2025-01-02T14:59:16", "%Y-%m-%dT%H:%M:%S")
-times = np.arange(0, 50000)
+start = datetime.strptime("2025-01-02T15:00:16", "%Y-%m-%dT%H:%M:%S")
+times = np.arange(0, 46800)
 times = times * timedelta(seconds=1)
 times = start + times
 
@@ -118,6 +118,7 @@ dynspec_ = np.zeros(dynspec.shape)
 for f in range(0,dynspec.shape[1]):
     dynspec_[:, f] = dynspec[:, f] * casa_flux
 
+print("dynspec_dynspec_.shape", dynspec_.shape)
 im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                 vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
