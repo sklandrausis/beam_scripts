@@ -112,6 +112,7 @@ for a_team_source in a_team_sources:
     ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
     fig, ax = plt.subplots()
+    ax.set_title(a_team_source)
     dynspec_ = np.zeros(dynspec.shape)
     for f in range(0,dynspec.shape[1]):
         dynspec_[:, f] = dynspec[:, f] * ateam_source_flux
