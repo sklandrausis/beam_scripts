@@ -134,8 +134,8 @@ for a_team_source in a_team_sources:
 
     ax2.set_xlabel("RA [deg]", fontweight='bold')
     ax2.set_ylabel("DEC [deg]", fontweight='bold')
-    ax2.legend()
-
+    
     print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
 
+ax2.legend()
 plt.show()
