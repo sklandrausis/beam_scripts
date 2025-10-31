@@ -59,7 +59,7 @@ azel = AltAz(
 )
 
 phasedir = SkyCoord.from_name("CAS A")
-times = Time("2025-07-18T14:00:00") + np.arange(12*60) * u.min
+times = Time("2025.01.02 14:59:16") + np.arange(12*60) * u.min
 
 times = times[::30]
 print(times[0], times[1], times[-1], len(times))
