@@ -99,6 +99,8 @@ LV614 = mydb.phase_centres[station]
 fig2, ax2 = plt.subplots()
 a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Hyd A", "Her A", "Pic A"]
 for a_team_source in a_team_sources:
+    print("Processing A-Team source", a_team_source)
+
     a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
 
     dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, times, freqs)
