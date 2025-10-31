@@ -96,8 +96,13 @@ times = start + times
 
 LV614 = mydb.phase_centres[station]
 
+'''
+For HydA and Hyd A, I got this error. In future coordinates should add in code.
+astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates for name 'HydA'
+'''
+
 fig2, ax2 = plt.subplots()
-a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Hyd A", "Her A", "Pic A"]
+a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
 for a_team_source in a_team_sources:
     print("Processing A-Team source", a_team_source)
 
@@ -111,7 +116,6 @@ for a_team_source in a_team_sources:
     for f in range(0,dynspec.shape[1]):
         dynspec_[:, f] = dynspec[:, f] * ateam_source_flux
 
-    print("dynspec_dynspec_.shape", dynspec_.shape)
     im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                     vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
