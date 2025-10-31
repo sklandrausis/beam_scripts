@@ -138,7 +138,7 @@ for a_team_source in a_team_sources:
 
     print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
 
-    np.save(dynspec_, "/mnt/LOFAR0/beam_scripts/" +  a_team_source.replace(" ", ""))
+    np.save("/mnt/LOFAR0/beam_scripts/" +  a_team_source.replace(" ", ""), dynspec_)
 
 ax2.legend()
 plt.show()
