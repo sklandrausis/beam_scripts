@@ -103,6 +103,7 @@ astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates fo
 
 fig2, ax2 = plt.subplots()
 ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
+target_source_flux = model_flux("3C295", freqs_, sun_true=False)
 a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
 for a_team_source in a_team_sources:
     print("Processing A-Team source", a_team_source)
@@ -116,7 +117,7 @@ for a_team_source in a_team_sources:
     ax.set_title(a_team_source)
     dynspec_ = np.zeros(dynspec.shape)
     for f in range(0,dynspec.shape[1]):
-        dynspec_[:, f] = dynspec[:, f] * ateam_source_flux
+        dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
     im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                     vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
@@ -136,6 +137,8 @@ for a_team_source in a_team_sources:
     ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
     print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+
+    np.save(dynspec_, "/mnt/LOFAR0/beam_scripts/" +  a_team_source.replace(" ", ""))
 
 ax2.legend()
 plt.show()
