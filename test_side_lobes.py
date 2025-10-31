@@ -82,8 +82,6 @@ ref_pos = EarthLocation.from_geocentric(*LV614, unit=u.m)
 
 latlonel = [ref_pos.lat.rad, ref_pos.lon.rad, ref_pos.height.value]
 
-src_casa =  SkyCoord.from_name("Cas A") #SkyCoord(ra="23h23m24.000s", dec="+58d48m54.00s", frame='icrs') # Cas A
-
 # Frequency range
 subband_min = 150
 subband_max = 311
@@ -98,47 +96,39 @@ times = start + times
 
 LV614 = mydb.phase_centres[station]
 
-az = np.linspace(0, 355, 36)
-el = np.linspace(30, 90, 6)
-azel = AltAz(
-    az=np.radians(az)[np.newaxis] * u.rad,
-    alt=np.radians(el)[:, np.newaxis] * u.rad,
-    location=ref_pos,
-)
-
-dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, src_casa, phasedir, times, freqs)
-print("dynspec.shape", dynspec.shape, len(times))
-print("distance_phase_center.shape", distance_phase_center.shape, len(times))
-print("distance_dir.shape", distance_dir.shape, len(times))
-
-casa_flux = model_flux("casa", freqs_, sun_true=False)
-
-fig, ax = plt.subplots()
-dynspec_ = np.zeros(dynspec.shape)
-for f in range(0,dynspec.shape[1]):
-    dynspec_[:, f] = dynspec[:, f] * casa_flux
-
-print("dynspec_dynspec_.shape", dynspec_.shape)
-im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
-                vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
-
-divider = make_axes_locatable(ax)
-cax1 = divider.append_axes("right", size="5%", pad=0.07,)
-plt.colorbar(im1, ax=ax, cax=cax1)
-
-ax.xaxis_date()
-ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
-ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
-ax.set_xlabel("Time", fontweight='bold')
-
 fig2, ax2 = plt.subplots()
-ax2.scatter(src_casa.ra, src_casa.dec, 100, label="Cas A")
-ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
+a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Hyd A", "Her A", "Pic A"]
+for a_team_source in a_team_sources:
+    a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
 
-ax2.set_xlabel("RA [deg]", fontweight='bold')
-ax2.set_ylabel("DEC [deg]", fontweight='bold')
-ax2.legend()
+    dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, times, freqs)
+    ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
-print("Separation [deg]", src_casa.separation(phasedir).deg)
+    fig, ax = plt.subplots()
+    dynspec_ = np.zeros(dynspec.shape)
+    for f in range(0,dynspec.shape[1]):
+        dynspec_[:, f] = dynspec[:, f] * ateam_source_flux
+
+    print("dynspec_dynspec_.shape", dynspec_.shape)
+    im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                    vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
+
+    divider = make_axes_locatable(ax)
+    cax1 = divider.append_axes("right", size="5%", pad=0.07,)
+    plt.colorbar(im1, ax=ax, cax=cax1)
+
+    ax.xaxis_date()
+    ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+    ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
+    ax.set_xlabel("Time", fontweight='bold')
+
+    ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
+    ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
+
+    ax2.set_xlabel("RA [deg]", fontweight='bold')
+    ax2.set_ylabel("DEC [deg]", fontweight='bold')
+    ax2.legend()
+
+    print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
 
 plt.show()
