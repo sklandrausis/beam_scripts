@@ -87,7 +87,7 @@ src_casa =  SkyCoord.from_name("Cas A") #SkyCoord(ra="23h23m24.000s", dec="+58d4
 # Frequency range
 subband_min = 150
 subband_max = 311
-freqs_ = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min)
+freqs_ = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min + 1)
 freqs = freqs_ * 1000000
 
 phasedir = SkyCoord.from_name("3C295")
