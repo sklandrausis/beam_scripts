@@ -102,6 +102,7 @@ astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates fo
 '''
 
 fig2, ax2 = plt.subplots()
+ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
 a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
 for a_team_source in a_team_sources:
     print("Processing A-Team source", a_team_source)
@@ -130,11 +131,10 @@ for a_team_source in a_team_sources:
     ax.set_xlabel("Time", fontweight='bold')
 
     ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
-    ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
 
     ax2.set_xlabel("RA [deg]", fontweight='bold')
     ax2.set_ylabel("DEC [deg]", fontweight='bold')
-    
+
     print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
 
 ax2.legend()
