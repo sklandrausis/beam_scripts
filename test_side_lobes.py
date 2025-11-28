@@ -1,3 +1,4 @@
+import os
 import sys
 
 from datetime import datetime, timedelta
@@ -14,6 +15,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from getDynspecBeam import getDynspec, mydb
 
+plt.style.use(os.path.expanduser('~') + "/.config/lofar/plot.style")
 
 def model_flux(calibrator, frequency, sun_true=False):
     """
@@ -101,7 +103,7 @@ For HydA and Hyd A, I got this error. In future coordinates should add in code.
 astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates for name 'HydA'
 '''
 
-fig2, ax2 = plt.subplots()
+fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
 target_source_flux = model_flux("3C295", freqs_, sun_true=False)
 a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
@@ -113,7 +115,7 @@ for a_team_source in a_team_sources:
     dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, times, freqs)
     ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax.set_title(a_team_source)
     dynspec_ = np.zeros(dynspec.shape)
     for f in range(0,dynspec.shape[1]):
@@ -123,8 +125,8 @@ for a_team_source in a_team_sources:
                     vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
     divider = make_axes_locatable(ax)
-    cax1 = divider.append_axes("right", size="5%", pad=0.07,)
-    plt.colorbar(im1, ax=ax, cax=cax1)
+    cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
+    plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
 
     ax.xaxis_date()
     ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
