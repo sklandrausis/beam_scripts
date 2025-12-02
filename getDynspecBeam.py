@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.coordinates import ITRS, EarthLocation, AltAz, SkyCoord
+from astropy.time import Time
 import astropy.units as u
 from astropy.constants import c
 
