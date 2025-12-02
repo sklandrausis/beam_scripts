@@ -1,2 +1,4 @@
 __pycache__/
 noise_power.h5
+*.npy
+backup

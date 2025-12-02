@@ -91,8 +91,8 @@ freqs_ = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - 
 freqs = freqs_ * 1000000
 
 phasedir = SkyCoord.from_name("3C295")
-start = datetime.strptime("2025-07-07T10:00:03", "%Y-%m-%dT%H:%M:%S")
-times = np.arange(0, 9000)
+start = datetime.strptime("2025-01-02T14:59:16", "%Y-%m-%dT%H:%M:%S")
+times = np.arange(0, 46800)
 times = times * timedelta(seconds=1)
 times = start + times
 
