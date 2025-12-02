@@ -87,13 +87,13 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     def sb_to_freq(subband_min, subband_max, rcumode, clock):
         if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
             n = 1
-            print("yes 1")
+            print("yes 1", rcumode)
         if rcumode == 5:  # 100 MHz - 200 MHz
             n = 2
-            print("yes 2")
+            print("yes 2", rcumode)
         else: # 200 MHz - 300 MHz
             n = 3
-            print("yes 3")
+            print("yes 3", rcumode)
 
                                                             #3  311          3            150      200
         print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
