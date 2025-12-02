@@ -81,6 +81,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
     station_coordinates = mydb.phase_centres[station]
     ref_pos = EarthLocation.from_geocentric(*station_coordinates, unit=u.m)
 
+    print("subband_min, subband_max, rcumode, clock", subband_min, subband_max, rcumode, clock)
     # Frequency range
     def sb_to_freq(subband_min, subband_max, rcumode, clock):
         if rcumode <= 4:  # 0 MHz - 100 MHz
@@ -90,6 +91,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
         else: # 200 MHz - 300 MHz
             n = 3
 
+                                                            #3  311          3            150      200
         print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
         return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
@@ -187,6 +189,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print("abc", args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
+         args.start_time, args.duration, args.clock)
+    
     main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
          args.start_time, args.duration, args.clock)
     sys.exit(0)
