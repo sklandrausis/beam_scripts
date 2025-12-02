@@ -119,7 +119,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax2.scatter(phasedir.ra, phasedir.dec, 100, label=target_source)
     target_source_flux = model_flux(target_source, freqs_, sun_true=False)
     a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
-    a_team_sum = np.zeros((len(times), len(freqs)))
+    a_team_sum = np.zeros((len(freqs), len(times)))
 
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
