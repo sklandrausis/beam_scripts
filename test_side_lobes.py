@@ -92,16 +92,8 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
 
         return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
-<<<<<<< HEAD
-phasedir = SkyCoord.from_name("3C295")
-start = datetime.strptime("2025-01-02T14:59:16", "%Y-%m-%dT%H:%M:%S")
-times = np.arange(0, 46800)
-times = times * timedelta(seconds=1)
-times = start + times
-=======
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
->>>>>>> 8dd8380138fee30e7ca2eb1102eead06e0fa0c3b
 
     phasedir = SkyCoord.from_name(target_source)
     start = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
