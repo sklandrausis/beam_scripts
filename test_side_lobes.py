@@ -90,6 +90,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
         else: # 200 MHz - 300 MHz
             n = 3
 
+        print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
         return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
