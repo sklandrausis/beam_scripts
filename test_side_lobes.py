@@ -78,6 +78,8 @@ def model_flux(calibrator, frequency, sun_true=False):
         return flux_model
 
 def sb_to_freq(subband_min, subband_max, rcumode, clock):
+    n=1
+
     if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
         n = 1
         print("yes 1", rcumode)
@@ -88,9 +90,9 @@ def sb_to_freq(subband_min, subband_max, rcumode, clock):
         n = 3
         print("yes 3", rcumode)
 
-                                                        #3  311          3            150      200
-        print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
-        return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
+    #3  311          3            150      200
+    print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
+    return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
 def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
     station_coordinates = mydb.phase_centres[station]
