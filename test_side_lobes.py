@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 
@@ -8,8 +9,7 @@ import matplotlib.dates as md
 import numpy
 
 import numpy as np
-from astropy.coordinates import AltAz, EarthLocation, ITRS, SkyCoord, FK5
-from astropy.time import Time
+from astropy.coordinates import EarthLocation, SkyCoord
 import astropy.units as u
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -77,70 +77,123 @@ def model_flux(calibrator, frequency, sun_true=False):
     else:
         return flux_model
 
-station = "LV614LBA"
-rcumode = 3
-LV614 = mydb.phase_centres[station]
-ref_pos = EarthLocation.from_geocentric(*LV614, unit=u.m)
+def main(station, rcumode, subband_min, subband_max, target_source, start_time, duration, output_dir_name="/mnt/LOFAR0/beam_scripts/", clock=200):
+    station_coordinates = mydb.phase_centres[station]
+    ref_pos = EarthLocation.from_geocentric(*station_coordinates, unit=u.m)
 
-latlonel = [ref_pos.lat.rad, ref_pos.lon.rad, ref_pos.height.value]
+    # Frequency range
+    def sb_to_freq(subband_min, subband_max, rcumode, clock):
+        if rcumode <= 4:  # 0 MHz - 100 MHz
+            n = 1
+        if rcumode == 5:  # 100 MHz - 200 MHz
+            n = 2
+        else: # 200 MHz - 300 MHz
+            n = 3
 
-# Frequency range
-subband_min = 150
-subband_max = 311
-freqs_ = 0 + (200 / 1024) * np.linspace(subband_min, subband_max, subband_max - subband_min + 1)
-freqs = freqs_ * 1000000
+        return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
+<<<<<<< HEAD
 phasedir = SkyCoord.from_name("3C295")
 start = datetime.strptime("2025-01-02T14:59:16", "%Y-%m-%dT%H:%M:%S")
 times = np.arange(0, 46800)
 times = times * timedelta(seconds=1)
 times = start + times
+=======
+    freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
+    freqs = freqs_ * 1000000  # Convert MHz to Hz
+>>>>>>> 8dd8380138fee30e7ca2eb1102eead06e0fa0c3b
 
-LV614 = mydb.phase_centres[station]
+    phasedir = SkyCoord.from_name(target_source)
+    start = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+    times = np.arange(0, duration)
+    times = times * timedelta(seconds=1)
+    times = start + times
 
-'''
-For HydA and Hyd A, I got this error. In future coordinates should add in code.
-astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates for name 'HydA'
-'''
+    '''
+    For HydA and Hyd A, I got this error. In future coordinates should add in code.
+    astropy.coordinates.name_resolve.NameResolveError: Unable to find coordinates for name 'HydA'
+    '''
 
-fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-ax2.scatter(phasedir.ra, phasedir.dec, 100, label="3C295")
-target_source_flux = model_flux("3C295", freqs_, sun_true=False)
-a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
-for a_team_source in a_team_sources:
-    print("Processing A-Team source", a_team_source)
+    fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    ax2.scatter(phasedir.ra, phasedir.dec, 100, label=target_source)
+    target_source_flux = model_flux(target_source, freqs_, sun_true=False)
+    a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
+    a_team_sum = np.zeros((times, freqs))
 
-    a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
+    for a_team_source in a_team_sources:
+        print("Processing A-Team source", a_team_source)
 
-    dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, times, freqs)
-    ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
+        a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
+        dynspec, distance_phase_center, distance_dir = getDynspec(ref_pos, rcumode, a_team_source_sky_coords, phasedir, times, freqs * u.Hz)
+        ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    ax.set_title(a_team_source)
-    dynspec_ = np.zeros(dynspec.shape)
-    for f in range(0,dynspec.shape[1]):
-        dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+        ax.set_title(a_team_source)
+        dynspec_ = np.zeros(dynspec.shape)
+        for f in range(0,dynspec.shape[1]):
+            dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
-    im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
-                    vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
+        a_team_sum += dynspec_
 
-    divider = make_axes_locatable(ax)
-    cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
-    plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
+        im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                        vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
-    ax.xaxis_date()
-    ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
-    ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
-    ax.set_xlabel("Time", fontweight='bold')
+        divider = make_axes_locatable(ax)
+        cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
+        plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
 
-    ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+        ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
+        ax.set_xlabel("Time", fontweight='bold')
 
-    ax2.set_xlabel("RA [deg]", fontweight='bold')
-    ax2.set_ylabel("DEC [deg]", fontweight='bold')
+        ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
 
-    print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+        ax2.set_xlabel("RA [deg]", fontweight='bold')
+        ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
-    np.save("/mnt/LOFAR0/beam_scripts/" +  a_team_source.replace(" ", ""), dynspec_)
+        print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
 
-ax2.legend()
-plt.show()
+        np.save(output_dir_name +  a_team_source.replace(" ", ""), dynspec_)
+
+    fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    ax_a_team_sum.set_title("a team sum")
+    im1_a_team_sum = ax_a_team_sum.imshow(ax_a_team_sum, aspect="auto",
+                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                    vmin=np.percentile(ax_a_team_sum, 1), vmax=np.percentile(ax_a_team_sum, 99))
+
+    divider_ax_a_team_sum = make_axes_locatable(ax_a_team_sum)
+    cax1_ax_a_team_sum = divider_ax_a_team_sum.append_axes("right", size="5%", pad=0.07, label="flux ratio")
+    plt.colorbar(im1_a_team_sum, ax=ax_a_team_sum, cax=cax1_ax_a_team_sum, label="flux ratio")
+
+    ax_a_team_sum.xaxis_date()
+    ax_a_team_sum.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_a_team_sum.xaxis.get_major_locator()))
+    ax_a_team_sum.set_ylabel("Frequencies [MHz]", fontweight='bold')
+    ax_a_team_sum.set_xlabel("Time", fontweight='bold')
+
+    np.save(output_dir_name + "a_team_sum", a_team_sum)
+
+    ax2.legend()
+    plt.show()
+
+if __name__ == "__main__":
+    #start_time = "2025-01-02T15:00:16"
+    #station = LV614LBA
+    #duration = 46800
+
+    parser = argparse.ArgumentParser(description='Create side lobes model for given target source')
+    parser.add_argument('station', type=str, help='name of the station')
+    parser.add_argument('rcumode', type=int, help='rcu mode of the observation')
+    parser.add_argument('subband_min', type=int, help='smallest subband')
+    parser.add_argument('subband_max', type=int, help='largest subband')
+    parser.add_argument('target_source', type=str, help='Target source of the observation')
+    parser.add_argument('start_time', type=str, help='start time of the observation in format '
+                                                     '"%Y-%m-%dT%H:%M:%S"')
+    parser.add_argument('duration', type=int, help='duration of the observation in seconds')
+    parser.add_argument('clock', type=int, help='station clock', default=200)
+
+    args = parser.parse_args()
+
+    main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
+         args.start_time, args.duration, args.clock)
+    sys.exit(0)

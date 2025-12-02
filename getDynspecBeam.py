@@ -15,11 +15,11 @@ mydb = LofarAntennaDatabase()
 LV614lba = mydb.phase_centres["LV614LBA"]
 etrs_to_pqr = mydb.pqr_to_etrs["LV614LBA"].T
 
-def get_global_pqr(station_name):
+def get_global_pqr(station_name:str):
     phase_centre = mydb.phase_centres[station_name]
     return etrs_to_pqr @ (phase_centre - LV614lba)
 
-def get_missing_elements(MSname, station):
+def get_missing_elements(MSname:str, station:str):
     myt = pt.table(f"{MSname}/LOFAR_ANTENNA_FIELD", ack=False)
     flags = myt.getcol('ELEMENT_FLAG')
     antnames = list( pt.table( f"{MSname}/ANTENNA", ack=False).getcol( "NAME" ) )
@@ -31,7 +31,7 @@ def get_missing_elements(MSname, station):
     return sortedflags
 
 
-def getAzelBeam( antpos, altaz, itrf_to_enu, ref_pos ) :
+def getAzelBeam( antpos:EarthLocation, altaz:AltAz, itrf_to_enu:np.ndarray, ref_pos: EarthLocation ) -> np.ndarray:
     '''returns distance vector for all antennas and all altaz directions.
     Input:
     antpos: array (Nant x 3) ENU positions of all antennas
@@ -51,7 +51,7 @@ def getAzelBeam( antpos, altaz, itrf_to_enu, ref_pos ) :
     return antpos @ enu_dir.T
 
 
-def getRaDecBeam( antpos, source, time, itrf_to_enu, ref_pos ):
+def getRaDecBeam( antpos: EarthLocation, source: SkyCoord, time: Time, itrf_to_enu: np.ndarray, ref_pos : EarthLocation ):
     '''returns distance vector for all antennas and all times for a single direction.
     Input:
     antpos: array (Nant x 3) ENU positions of all antennas
@@ -79,10 +79,11 @@ def getRaDecBeam( antpos, source, time, itrf_to_enu, ref_pos ):
     return antpos @ enu_dir.T
 
 
-def getPower( distance_dir, distance_phase_center, freqs, common_axis=None ):
+def getPower( distance_dir: np.ndarray, distance_phase_center: np.ndarray, freqs: u.Quantity, common_axis=None ):
     '''Calculate power of beam response given phase_center and direction distance vector for all freqs'''
+    freqsHz = freqs.to(u.Hz).value
     if common_axis :
-        nu = np.reshape( freqs, ( -1, 1, 1 ) )
+        nu = np.reshape( freqsHz, ( -1, 1, 1 ) )
         dd = np.reshape(
             distance_dir,
             ( 1, ) + distance_dir.shape #+ ( 1, )
@@ -92,7 +93,7 @@ def getPower( distance_dir, distance_phase_center, freqs, common_axis=None ):
             ( 1, ) + distance_phase_center.shape #+ ( 1, )
             )
     else:
-        nu = np.reshape( freqs, ( -1, 1, 1, 1 ) )
+        nu = np.reshape( freqsHz, ( -1, 1, 1, 1 ) )
         dd = np.reshape(
             distance_dir,
             ( 1, 1 ) + distance_dir.shape #+ ( 1, )
@@ -106,8 +107,8 @@ def getPower( distance_dir, distance_phase_center, freqs, common_axis=None ):
     return np.abs(A)/dph.shape[-1]
 
 
-def getDynspec( station, rcumode, radec, phasedir, times, freqs ) :
-    antpos, rot_matrix = stu.get_station_xyz(
+def getDynspec( station:str, rcumode:int, radec:SkyCoord, phasedir:SkyCoord, times:Time, freqs:u.Quantity ) :
+    antpos, _ = stu.get_station_xyz(
         station,
         rcumode,
         mydb
@@ -124,8 +125,8 @@ def getDynspec( station, rcumode, radec, phasedir, times, freqs ) :
     dynspec = getPower( distance_dir.T, distance_phase_center.T, freqs, common_axis=True )
     return dynspec, distance_phase_center, distance_dir
 
-def getBeamPower( station, rcumode, azel, phasedir, times, freqs, MSname='') :
-    antpos, rot_matrix = stu.get_station_xyz(
+def getBeamPower( station: str, rcumode:int, azel:AltAz, phasedir:SkyCoord, times:Time, freqs:u.Quantity, MSname='') :
+    antpos, _ = stu.get_station_xyz(
         station,
         rcumode,
         mydb
