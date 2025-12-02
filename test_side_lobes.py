@@ -85,7 +85,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                       #311         3            150       200
     # Frequency range
     def sb_to_freq(subband_min, subband_max, rcumode, clock):
-        if rcumode <= 4:  # 0 MHz - 100 MHz
+        if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
             n = 1
         if rcumode == 5:  # 100 MHz - 200 MHz
             n = 2
@@ -192,6 +192,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    #            LV614LBA 150 311 3 3C295 2025-01-02T15:00:16 46800 200 /mnt/LOFAR0/beam_scripts/
     print("abc", args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
          args.start_time, args.duration, args.clock, args.output_dir_name)
 
