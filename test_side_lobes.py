@@ -182,7 +182,7 @@ if __name__ == "__main__":
     parser.add_argument('start_time', type=str, help='start time of the observation in format '
                                                      '"%Y-%m-%dT%H:%M:%S"')
     parser.add_argument('duration', type=int, help='duration of the observation in seconds')
-    parser.add_argument('clock', type=int, help='station clock', default=200)
+    parser.add_argument('-c', '--clock', type=int, help='station clock', default=200)
 
     args = parser.parse_args()
 
