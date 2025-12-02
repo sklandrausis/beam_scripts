@@ -77,11 +77,12 @@ def model_flux(calibrator, frequency, sun_true=False):
     else:
         return flux_model
 
-def main(station, rcumode, subband_min, subband_max, target_source, start_time, duration, output_dir_name="/mnt/LOFAR0/beam_scripts/", clock=200):
+def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
     station_coordinates = mydb.phase_centres[station]
     ref_pos = EarthLocation.from_geocentric(*station_coordinates, unit=u.m)
 
     print("subband_min, subband_max, rcumode, clock", subband_min, subband_max, rcumode, clock)
+                                                      #311         3            150       200
     # Frequency range
     def sb_to_freq(subband_min, subband_max, rcumode, clock):
         if rcumode <= 4:  # 0 MHz - 100 MHz
@@ -186,12 +187,14 @@ if __name__ == "__main__":
                                                      '"%Y-%m-%dT%H:%M:%S"')
     parser.add_argument('duration', type=int, help='duration of the observation in seconds')
     parser.add_argument('-c', '--clock', type=int, help='station clock', default=200)
+    parser.add_argument('-o', '--output_dir_name', type=str, help='output directory name',
+                        default="/mnt/LOFAR0/beam_scripts/")
 
     args = parser.parse_args()
 
     print("abc", args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
-         args.start_time, args.duration, args.clock)
-    
+         args.start_time, args.duration, args.clock, args.output_dir_name)
+
     main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
-         args.start_time, args.duration, args.clock)
+         args.start_time, args.duration, args.clock, args.output_dir_name)
     sys.exit(0)
