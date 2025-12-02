@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.coordinates import ITRS, EarthLocation, AltAz
+from astropy.coordinates import ITRS, EarthLocation, AltAz, SkyCoord
 import astropy.units as u
 from astropy.constants import c
 
