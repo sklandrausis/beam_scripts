@@ -161,8 +161,9 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_a_team_sum.set_title("a team sum")
-    im1_a_team_sum = ax_a_team_sum.imshow(ax_a_team_sum, aspect="auto",
-                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+    im1_a_team_sum = ax_a_team_sum.imshow(a_team_sum, aspect="auto",
+                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                    vmin=np.percentile(a_team_sum, 1), vmax=np.percentile(a_team_sum, 99))
 
     divider_ax_a_team_sum = make_axes_locatable(ax_a_team_sum)
     cax1_ax_a_team_sum = divider_ax_a_team_sum.append_axes("right", size="5%", pad=0.07, label="flux ratio")
