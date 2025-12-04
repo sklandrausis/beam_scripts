@@ -117,7 +117,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     elevation_azimuth_target_source = phasedir.transform_to(frame)
     elevation = elevation_azimuth_target_source.alt
-    zenith_angle = 90 - elevation
+    zenith_angle = 90 - elevation.values
     ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
 
     for a_team_source in a_team_sources:
