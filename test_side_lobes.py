@@ -82,24 +82,16 @@ def sb_to_freq(subband_min, subband_max, rcumode, clock):
 
     if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
         n = 1
-        print("yes 1", rcumode)
     elif rcumode == 5:  # 100 MHz - 200 MHz
         n = 2
-        print("yes 2", rcumode)
     else: # 200 MHz - 300 MHz
         n = 3
-        print("yes 3", rcumode)
 
-    #3  311          3            150      200
-    print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
     return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
 def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
     station_coordinates = mydb.phase_centres[station]
-    ref_pos = EarthLocation.from_geocentric(*station_coordinates, unit=u.m)
 
-    print("subband_min, subband_max, rcumode, clock", subband_min, subband_max, rcumode, clock)
-                                                      #311         3            150       200
     # Frequency range
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
@@ -125,7 +117,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         print("Processing A-Team source", a_team_source)
 
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
-
         dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                   times, freqs * u.Hz)
         ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
@@ -137,7 +128,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
         a_team_sum += dynspec_
-
         im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                         vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
@@ -198,10 +188,6 @@ if __name__ == "__main__":
                         default="/mnt/LOFAR0/beam_scripts/")
 
     args = parser.parse_args()
-
-    #            LV614LBA 150 311 3 3C295 2025-01-02T15:00:16 46800 200 /mnt/LOFAR0/beam_scripts/
-    print("abc", args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
-         args.start_time, args.duration, args.clock, args.output_dir_name)
 
     main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
          args.start_time, args.duration, args.clock, args.output_dir_name)
