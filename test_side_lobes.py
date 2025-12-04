@@ -157,7 +157,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
         elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
         elevation = elevation_azimuth.alt
-        zenith_angle = 90 - elevation
+        zenith_angle = 90 - elevation.values
         ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
