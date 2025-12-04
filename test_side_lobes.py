@@ -9,7 +9,7 @@ import matplotlib.dates as md
 import numpy
 
 import numpy as np
-from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.coordinates import AltAz, SkyCoord
 import astropy.units as u
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -90,8 +90,6 @@ def sb_to_freq(subband_min, subband_max, rcumode, clock):
     return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
 def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
-    station_coordinates = mydb.phase_centres[station]
-
     # Frequency range
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
@@ -112,6 +110,15 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     target_source_flux = model_flux(target_source, freqs_, sun_true=False)
     a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
     a_team_sum = np.zeros((len(freqs), len(times)))
+
+    fig_zenith_angle, ax_zenith_angle = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    station_coordinates = mydb.phase_centres[station]
+    frame = AltAz(obstime=times, location=station_coordinates)
+
+    elevation_azimuth_target_source = phasedir.transform_to(frame)
+    elevation = elevation_azimuth_target_source.alt
+    zenith_angle = 90 - elevation
+    ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
 
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
@@ -146,8 +153,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
         print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+        np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
 
-        np.save(output_dir_name +  a_team_source.replace(" ", ""), dynspec_)
+        elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
+        elevation = elevation_azimuth.alt
+        zenith_angle = 90 - elevation
+        ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_a_team_sum.set_title("a team sum")
@@ -166,13 +177,21 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     np.save(output_dir_name + "a_team_sum", a_team_sum)
 
+    ax_zenith_angle.set_ylabel("Zenith angle [deg]")
+    ax_zenith_angle.set_xlabel("Time")
+    ax_zenith_angle.xaxis_date()
+    ax_zenith_angle.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+
     ax2.legend()
+    ax_zenith_angle.legend()
     plt.show()
 
 if __name__ == "__main__":
     #start_time = "2025-01-02T15:00:16"
     #station = LV614LBA
     #duration = 46800
+
+    # python3.10 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 46800
 
     parser = argparse.ArgumentParser(description='Create side lobes model for given target source')
     parser.add_argument('station', type=str, help='name of the station')
