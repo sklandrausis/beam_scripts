@@ -9,7 +9,7 @@ import matplotlib.dates as md
 import numpy
 
 import numpy as np
-from astropy.coordinates import AltAz, SkyCoord
+from astropy.coordinates import AltAz, SkyCoord, EarthLocation
 import astropy.units as u
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -112,7 +112,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     a_team_sum = np.zeros((len(freqs), len(times)))
 
     fig_zenith_angle, ax_zenith_angle = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    station_coordinates = mydb.phase_centres[station]
+    station_coordinates = EarthLocation.from_geocentric(*mydb.phase_centres[station], unit=u.m)
     frame = AltAz(obstime=times, location=station_coordinates)
 
     elevation_azimuth_target_source = phasedir.transform_to(frame)
