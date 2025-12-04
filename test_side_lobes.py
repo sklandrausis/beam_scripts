@@ -117,7 +117,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     elevation_azimuth_target_source = phasedir.transform_to(frame)
     elevation = elevation_azimuth_target_source.alt
-    zenith_angle = 90 - elevation.values
+    zenith_angle = 90 - elevation.value
     ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
 
     for a_team_source in a_team_sources:
@@ -157,7 +157,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
         elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
         elevation = elevation_azimuth.alt
-        zenith_angle = 90 - elevation.values
+        zenith_angle = 90 - elevation.value
         ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
