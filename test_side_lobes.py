@@ -176,8 +176,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     obstimestp = timedelta(seconds=1)
     obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
     pointingdir = (np.deg2rad(phasedir.ra), np.deg2rad(phasedir.dec), 'J2000')
-    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', station[-3:len(station)],
-                                                                  'Hamaker', station[0:5], obstimebeg,
+    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LBA",
+                                                                  'Hamaker', "LV614", obstimebeg,
                                                                   timedelta(seconds=duration), obstimestp, pointingdir)
 
     print("samptimes", samptimes[0], samptimes[1], samptimes.shape, len(times))
