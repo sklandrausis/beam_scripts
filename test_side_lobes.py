@@ -190,10 +190,11 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax_zenith_angle_cos.set_ylabel(r'$cos (Zenith\ angle) ^2$')
     ax_zenith_angle_cos.set_xlabel("Time")
     ax_zenith_angle_cos.xaxis_date()
-    ax_zenith_angle_cos.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle.xaxis.get_major_locator()))
+    ax_zenith_angle_cos.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle_cos.xaxis.get_major_locator()))
 
     ax2.legend()
     ax_zenith_angle.legend()
+    ax_zenith_angle_cos.legend()
     plt.show()
 
 if __name__ == "__main__":
