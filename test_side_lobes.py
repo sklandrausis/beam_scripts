@@ -9,13 +9,33 @@ import matplotlib.dates as md
 import numpy
 
 import numpy as np
-from astropy.coordinates import AltAz, SkyCoord, EarthLocation
+from astropy.coordinates import AltAz, SkyCoord, EarthLocation, ITRS
 import astropy.units as u
+from astropy.time import Time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from dreambeam.rime.scenarios import on_pointing_axis_tracking
 
 from getDynspecBeam import getDynspec, mydb
 
 plt.style.use(os.path.expanduser('~') + "/.config/lofar/plot.style")
+
+
+def radec_to_xyz(ra, dec, time):
+    """
+    Convert RA and Dec ICRS coordinates to ITRS cartesian coordinates.
+
+    Args:
+        ra (astropy.coordinates.Angle): Right ascension
+        dec (astropy.coordinates.Angle): Declination
+        time (float): MJD time in seconds
+
+    Returns:
+        pointing_xyz (ndarray): NumPy array containing the ITRS X, Y and Z coordinates
+    """
+    obstime = Time(time/3600/24, scale='utc', format='mjd')
+    dir_pointing = SkyCoord(ra, dec)
+    dir_pointing_itrs = dir_pointing.transform_to(ITRS(obstime=obstime))
+    return np.asarray(dir_pointing_itrs.cartesian.xyz.transpose())
 
 def model_flux(calibrator, frequency, sun_true=False):
     """
@@ -122,6 +142,47 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     zenith_angle = 90 - elevation.value
     ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
     ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) **2, label=target_source)
+
+    """
+    telescopename : str
+        Name of telescope, as registered in TelescopesWiz() instance.
+    stnid : str
+        Name or ID of the station, as registered in TelescopesWiz() instance.
+    band : str
+        Name of band, as registered in TelescopesWiz() instance.
+    antmodel : str
+        Name of antenna model, e.g. 'Hamaker', as registered in TelescopesWiz()
+        instance.
+    obstimebeg : datetime.datetime
+        Date-time when the tracking observation begins.
+    obsdur : datetime.deltatime
+        Duration of the entire tracking observation in seconds. The sample
+        at obstimebeg+duration is included.
+    obstimestp : datetime.deltatime
+        Time step in seconds for which the jones matrix should be sampled at.
+    pointingdir : (float, float, str)
+        Length 3 tuple encoding the tracking direction on the celestial sphere.
+        The last tuple element should usually be 'J2000', in which case the
+        the first two tuple elements are the right ascension and declination,
+        respectively, in radians.
+    do_parallactic_rot : bool (optional)
+        Whether of not to perform parallactic rotation (default True).
+        
+    samptimes, freqs, jones, jonesobj = on_pointing_axis_tracking('LOFAR',
+    ... 'HBA', 'Hamaker', 'SE607', obstimebeg, duration, obstimestp,
+    ... pointingdir)
+    """
+
+    obstimestp = timedelta(seconds=1)
+    obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+    pointingdir = (np.deg2rad(phasedir.ra), np.deg2rad(phasedir.dec), 'J2000')
+    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', station[-3:len(station)],
+                                                                  'Hamaker', station[0:5], obstimebeg,
+                                                                  timedelta(seconds=duration), obstimestp, pointingdir)
+
+    print("samptimes", samptimes[0], samptimes[1], samptimes.shape, len(times))
+    print("freqs_joins", freqs_joins[0], freqs[1], freqs_joins.shape)
+    print("jonesobj", jonesobj.shape, a_team_sum.shape)
 
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
