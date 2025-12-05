@@ -112,6 +112,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     a_team_sum = np.zeros((len(freqs), len(times)))
 
     fig_zenith_angle, ax_zenith_angle = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig_zenith_angle_cos, ax_zenith_angle_cos = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+
     station_coordinates = EarthLocation.from_geocentric(*mydb.phase_centres[station], unit=u.m)
     frame = AltAz(obstime=times, location=station_coordinates)
 
@@ -119,6 +121,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     elevation = elevation_azimuth_target_source.alt
     zenith_angle = 90 - elevation.value
     ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
+    ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) **2, label=target_source)
 
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
@@ -159,8 +162,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         elevation = elevation_azimuth.alt
         zenith_angle = 90 - elevation.value
         ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
+        ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+
     ax_a_team_sum.set_title("a team sum")
     im1_a_team_sum = ax_a_team_sum.imshow(a_team_sum, aspect="auto",
                     extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
@@ -180,7 +185,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax_zenith_angle.set_ylabel("Zenith angle [deg]")
     ax_zenith_angle.set_xlabel("Time")
     ax_zenith_angle.xaxis_date()
-    ax_zenith_angle.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+    ax_zenith_angle.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle.xaxis.get_major_locator()))
+
+    ax_zenith_angle_cos.set_ylabel(r'$cos (Zenith\ angle) ^2$')
+    ax_zenith_angle_cos.set_xlabel("Time")
+    ax_zenith_angle_cos.xaxis_date()
+    ax_zenith_angle_cos.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle.xaxis.get_major_locator()))
 
     ax2.legend()
     ax_zenith_angle.legend()
