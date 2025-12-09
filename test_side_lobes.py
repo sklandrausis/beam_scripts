@@ -178,10 +178,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     pointingdir = (np.deg2rad(phasedir.ra), np.deg2rad(phasedir.dec), 'J2000')
     samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                   'LBA', "Hamaker", obstimebeg,
-                                                                  timedelta(seconds=duration), obstimestp, pointingdir)
+                                                                  timedelta(seconds=duration-1), obstimestp, pointingdir)
 
     print("samptimes", samptimes[0], samptimes[1], len(samptimes), len(times))
-    print("freqs_joins", freqs_joins[0], freqs[1], len(freqs_joins), len(freqs))
+    print("freqs_joins", freqs_joins[0], freqs[1], freqs[-1], len(freqs_joins), len(freqs))
     print("jonesobj", jonesobj)
     print("jones", jones.shape, a_team_sum.shape)
 
