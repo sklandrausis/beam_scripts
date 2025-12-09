@@ -181,7 +181,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
 
     print("samptimes", samptimes[0], samptimes[1], len(samptimes), len(times))
-    print("freqs_joins", freqs_joins[0], freqs[1], freqs[2], freqs[-1], len(freqs_joins), len(freqs))
+    print("freqs_joins", freqs_joins[0], freqs_joins[1], freqs_joins[2], freqs_joins[-1], len(freqs_joins), len(freqs))
     print("jonesobj", jonesobj)
     print("jones", jones.shape, a_team_sum.shape)
 
