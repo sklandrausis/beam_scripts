@@ -184,9 +184,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     jones_yy = jones[:, :, 1, 1]
     jones_i = (jones_xx + jones_yy) /2
     freqs_joins_index_min = freqs_joins.index(freqs[0])
+    freqs_joins_index_max = freqs_joins.index(freqs[-1])
+    jones_i = jones_i[:, freqs_joins_index_min:freqs_joins_index_max]
 
-    print("freqs_joins_index_min", freqs_joins_index_min, freqs_joins[freqs_joins_index_min], freqs[0])
-
+    print("tmp", jones_i.shape, a_team_sum.shape)
 
     sys.exit(0)
 
