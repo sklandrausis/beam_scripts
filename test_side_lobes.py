@@ -180,8 +180,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                   'LBA', "Hamaker", obstimebeg,
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
 
-    jones_xx = jones[:, :, 0, 0]
-    jones_yy = jones[:, :, 1, 1]
+    jones_xx = np.abs(jones[:, :, 0, 0])
+    jones_yy = np.abs(jones[:, :, 1, 1])
     jones_i = (jones_xx + jones_yy) /2
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) +1
