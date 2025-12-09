@@ -185,7 +185,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     jones_i = (jones_xx + jones_yy) /2
     freqs_joins_index_min = freqs_joins.index(freqs[0])
 
-    print("freqs_joins_index_min", freqs_joins_index_min, freqs_joins[freqs_joins], freqs[0])
+    print("freqs_joins_index_min", freqs_joins_index_min, freqs_joins[freqs_joins_index_min], freqs[0])
 
 
     sys.exit(0)
