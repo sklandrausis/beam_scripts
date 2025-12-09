@@ -180,10 +180,13 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                   'LBA', "Hamaker", obstimebeg,
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
 
-    print("samptimes", samptimes[0], samptimes[1], len(samptimes), len(times))
-    print("freqs_joins", freqs_joins[0], freqs_joins[1], freqs_joins[2], freqs_joins[-1], len(freqs_joins), len(freqs))
-    print("jonesobj", jonesobj)
-    print("jones", jones.shape, a_team_sum.shape, jones[:, :, 0, 0].shape)
+    jones_xx = jones[:, :, 0, 0]
+    jones_yy = jones[:, :, 1, 1]
+    jones_i = (jones_xx + jones_yy) /2
+    freqs_joins_index_min = freqs_joins.index(freqs[0])
+
+    print("freqs_joins_index_min", freqs_joins_index_min, freqs_joins[freqs_joins], freqs[0])
+
 
     sys.exit(0)
 
