@@ -189,7 +189,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_jones_i.set_title("jones")
-    im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto")
+    im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto",
+                                          extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
     divider_jones_i = make_axes_locatable(ax_jones_i)
     cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
