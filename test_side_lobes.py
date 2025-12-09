@@ -182,7 +182,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     print("samptimes", samptimes[0], samptimes[1], len(samptimes), len(times))
     print("freqs_joins", freqs_joins[0], freqs[1], len(freqs_joins), len(freqs))
-    print("jonesobj", jonesobj.shape, a_team_sum.shape)
+    print("jonesobj", len(jonesobj))
+    print("jones", jones.shape, a_team_sum.shape)
 
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
