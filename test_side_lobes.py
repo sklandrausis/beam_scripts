@@ -185,6 +185,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     print("jonesobj", jonesobj)
     print("jones", jones.shape, a_team_sum.shape)
 
+    sys.exit(0)
+
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
 
