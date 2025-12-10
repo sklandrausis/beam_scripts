@@ -9,13 +9,33 @@ import matplotlib.dates as md
 import numpy
 
 import numpy as np
-from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.coordinates import AltAz, SkyCoord, EarthLocation, ITRS
 import astropy.units as u
+from astropy.time import Time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from dreambeam.rime.scenarios import on_pointing_axis_tracking
 
 from getDynspecBeam import getDynspec, mydb
 
 plt.style.use(os.path.expanduser('~') + "/.config/lofar/plot.style")
+
+
+def radec_to_xyz(ra, dec, time):
+    """
+    Convert RA and Dec ICRS coordinates to ITRS cartesian coordinates.
+
+    Args:
+        ra (astropy.coordinates.Angle): Right ascension
+        dec (astropy.coordinates.Angle): Declination
+        time (float): MJD time in seconds
+
+    Returns:
+        pointing_xyz (ndarray): NumPy array containing the ITRS X, Y and Z coordinates
+    """
+    obstime = Time(time/3600/24, scale='utc', format='mjd')
+    dir_pointing = SkyCoord(ra, dec)
+    dir_pointing_itrs = dir_pointing.transform_to(ITRS(obstime=obstime))
+    return np.asarray(dir_pointing_itrs.cartesian.xyz.transpose())
 
 def model_flux(calibrator, frequency, sun_true=False):
     """
@@ -82,24 +102,14 @@ def sb_to_freq(subband_min, subband_max, rcumode, clock):
 
     if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
         n = 1
-        print("yes 1", rcumode)
     elif rcumode == 5:  # 100 MHz - 200 MHz
         n = 2
-        print("yes 2", rcumode)
     else: # 200 MHz - 300 MHz
         n = 3
-        print("yes 3", rcumode)
 
-    #3  311          3            150      200
-    print("n, subband_min, subband_max, rcumode, clock", n, subband_min, subband_max, rcumode, clock)
     return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
 
 def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
-    station_coordinates = mydb.phase_centres[station]
-    ref_pos = EarthLocation.from_geocentric(*station_coordinates, unit=u.m)
-
-    print("subband_min, subband_max, rcumode, clock", subband_min, subband_max, rcumode, clock)
-                                                      #311         3            150       200
     # Frequency range
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
@@ -121,11 +131,80 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
     a_team_sum = np.zeros((len(freqs), len(times)))
 
+    fig_zenith_angle, ax_zenith_angle = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig_zenith_angle_cos, ax_zenith_angle_cos = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+
+    station_coordinates = EarthLocation.from_geocentric(*mydb.phase_centres[station], unit=u.m)
+    frame = AltAz(obstime=times, location=station_coordinates)
+
+    elevation_azimuth_target_source = phasedir.transform_to(frame)
+    elevation = elevation_azimuth_target_source.alt
+    zenith_angle = 90 - elevation.value
+    ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
+    ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) **2, label=target_source)
+
+    """
+    telescopename : str
+        Name of telescope, as registered in TelescopesWiz() instance.
+    stnid : str
+        Name or ID of the station, as registered in TelescopesWiz() instance.
+    band : str
+        Name of band, as registered in TelescopesWiz() instance.
+    antmodel : str
+        Name of antenna model, e.g. 'Hamaker', as registered in TelescopesWiz()
+        instance.
+    obstimebeg : datetime.datetime
+        Date-time when the tracking observation begins.
+    obsdur : datetime.deltatime
+        Duration of the entire tracking observation in seconds. The sample
+        at obstimebeg+duration is included.
+    obstimestp : datetime.deltatime
+        Time step in seconds for which the jones matrix should be sampled at.
+    pointingdir : (float, float, str)
+        Length 3 tuple encoding the tracking direction on the celestial sphere.
+        The last tuple element should usually be 'J2000', in which case the
+        the first two tuple elements are the right ascension and declination,
+        respectively, in radians.
+    do_parallactic_rot : bool (optional)
+        Whether of not to perform parallactic rotation (default True).
+        
+    samptimes, freqs, jones, jonesobj = on_pointing_axis_tracking('LOFAR',
+    ... 'HBA', 'Hamaker', 'SE607', obstimebeg, duration, obstimestp,
+    ... pointingdir)
+    """
+
+    obstimestp = timedelta(seconds=1)
+    obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+    pointingdir = (np.deg2rad(phasedir.ra), np.deg2rad(phasedir.dec), 'J2000')
+    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
+                                                                  'LBA', "Hamaker", obstimebeg,
+                                                                  timedelta(seconds=duration-1), obstimestp, pointingdir)
+
+    jones_xx = np.abs(jones[:, :, 0, 0])
+    jones_yy = np.abs(jones[:, :, 1, 1])
+    jones_i = (jones_xx + jones_yy) /2
+    freqs_joins_index_min = freqs_joins.index(freqs[0])
+    freqs_joins_index_max = freqs_joins.index(freqs[-1]) +1
+    jones_i = jones_i[freqs_joins_index_min:freqs_joins_index_max, :]
+
+    fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    ax_jones_i.set_title("jones")
+    im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto",
+                                          extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+
+    divider_jones_i = make_axes_locatable(ax_jones_i)
+    cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
+    plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+
+    ax_jones_i.xaxis_date()
+    ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+    ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
+    ax_jones_i.set_xlabel("Time", fontweight='bold')
+
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
 
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
-
         dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                   times, freqs * u.Hz)
         ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
@@ -137,7 +216,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
         a_team_sum += dynspec_
-
         im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                         vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
@@ -156,10 +234,45 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
         print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+        np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
 
-        np.save(output_dir_name +  a_team_source.replace(" ", ""), dynspec_)
+        elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
+        elevation = elevation_azimuth.alt
+        zenith_angle = 90 - elevation.value
+        ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
+        ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
+
+        obstimestp = timedelta(seconds=1)
+        obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra), np.deg2rad(a_team_source_sky_coords.dec), 'J2000')
+        samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
+                                                                            'LBA', "Hamaker", obstimebeg,
+                                                                            timedelta(seconds=duration - 1), obstimestp,
+                                                                            pointingdir)
+
+        jones_xx = np.abs(jones[:, :, 0, 0])
+        jones_yy = np.abs(jones[:, :, 1, 1])
+        jones_i = (jones_xx + jones_yy) / 2
+        freqs_joins_index_min = freqs_joins.index(freqs[0])
+        freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
+        jones_i = jones_i[freqs_joins_index_min:freqs_joins_index_max, :]
+
+        fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+        ax_jones_i.set_title("jones")
+        im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto",
+                                        extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+
+        divider_jones_i = make_axes_locatable(ax_jones_i)
+        cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
+        plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+
+        ax_jones_i.xaxis_date()
+        ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+        ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
+        ax_jones_i.set_xlabel("Time", fontweight='bold')
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+
     ax_a_team_sum.set_title("a team sum")
     im1_a_team_sum = ax_a_team_sum.imshow(a_team_sum, aspect="auto",
                     extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
@@ -176,13 +289,27 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     np.save(output_dir_name + "a_team_sum", a_team_sum)
 
+    ax_zenith_angle.set_ylabel("Zenith angle [deg]")
+    ax_zenith_angle.set_xlabel("Time")
+    ax_zenith_angle.xaxis_date()
+    ax_zenith_angle.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle.xaxis.get_major_locator()))
+
+    ax_zenith_angle_cos.set_ylabel(r'$cos (Zenith\ angle) ^2$')
+    ax_zenith_angle_cos.set_xlabel("Time")
+    ax_zenith_angle_cos.xaxis_date()
+    ax_zenith_angle_cos.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle_cos.xaxis.get_major_locator()))
+
     ax2.legend()
+    ax_zenith_angle.legend()
+    ax_zenith_angle_cos.legend()
     plt.show()
 
 if __name__ == "__main__":
     #start_time = "2025-01-02T15:00:16"
     #station = LV614LBA
     #duration = 46800
+
+    # python3.10 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 46800
 
     parser = argparse.ArgumentParser(description='Create side lobes model for given target source')
     parser.add_argument('station', type=str, help='name of the station')
@@ -198,10 +325,6 @@ if __name__ == "__main__":
                         default="/mnt/LOFAR0/beam_scripts/")
 
     args = parser.parse_args()
-
-    #            LV614LBA 150 311 3 3C295 2025-01-02T15:00:16 46800 200 /mnt/LOFAR0/beam_scripts/
-    print("abc", args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
-         args.start_time, args.duration, args.clock, args.output_dir_name)
 
     main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
          args.start_time, args.duration, args.clock, args.output_dir_name)
