@@ -201,9 +201,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
     ax_jones_i.set_xlabel("Time", fontweight='bold')
 
-    plt.show()
-    sys.exit(0)
-
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
 
@@ -244,6 +241,35 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         zenith_angle = 90 - elevation.value
         ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
         ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
+
+        obstimestp = timedelta(seconds=1)
+        obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra), np.deg2rad(a_team_source_sky_coords.dec), 'J2000')
+        samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
+                                                                            'LBA', "Hamaker", obstimebeg,
+                                                                            timedelta(seconds=duration - 1), obstimestp,
+                                                                            pointingdir)
+
+        jones_xx = np.abs(jones[:, :, 0, 0])
+        jones_yy = np.abs(jones[:, :, 1, 1])
+        jones_i = (jones_xx + jones_yy) / 2
+        freqs_joins_index_min = freqs_joins.index(freqs[0])
+        freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
+        jones_i = jones_i[freqs_joins_index_min:freqs_joins_index_max, :]
+
+        fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+        ax_jones_i.set_title("jones")
+        im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto",
+                                        extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+
+        divider_jones_i = make_axes_locatable(ax_jones_i)
+        cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
+        plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+
+        ax_jones_i.xaxis_date()
+        ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+        ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
+        ax_jones_i.set_xlabel("Time", fontweight='bold')
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
