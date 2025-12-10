@@ -236,7 +236,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                   times, freqs * u.Hz)
 
-        ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False) * jones_i
+        dynspec = dynspec * jones_i
+        ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
         ax.set_title(a_team_source)
