@@ -250,9 +250,42 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
         jones_xx_ateam = jones[:, :, 0, 0]
         jones_yy_ateam = jones[:, :, 1, 1]
+        jones_xy_ateam = jones[:, :, 1, 0]
+        jones_yx_ateam = jones[:, :, 0, 1]
+
+        ''''
+        del fig_jones_i, ax_jones_i
+        fig_jones_i, ax_jones_i = plt.subplots(nrows=2, ncols=2, figsize=(16, 16), dpi=150, sharex=True, sharey=True)
+        ax_jones_i[0][0].imshow(jones_xx_ateam, aspect="auto",
+                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+        ax_jones_i[1][1].imshow(jones_yy_ateam, aspect="auto",
+                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+        ax_jones_i[1][0].imshow(jones_xy_ateam, aspect="auto",
+                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+        ax_jones_i[0][1].imshow(jones_yx_ateam, aspect="auto",
+                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+
+        ax_jones_i[0][0].xaxis_date()
+        ax_jones_i[0][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][0].xaxis.get_major_locator()))
+        ax_jones_i[0][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
+
+        ax_jones_i[1][1].xaxis_date()
+        ax_jones_i[1][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][1].xaxis.get_major_locator()))
+        ax_jones_i[1][1].set_xlabel("Time", fontweight='bold')
+
+        ax_jones_i[1][0].xaxis_date()
+        ax_jones_i[1][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][0].xaxis.get_major_locator()))
+        ax_jones_i[1][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
+        ax_jones_i[1][0].set_xlabel("Time", fontweight='bold')
+
+        ax_jones_i[0][1].xaxis_date()
+        ax_jones_i[0][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][1].xaxis.get_major_locator()))
+
+        plt.show()
+        sys.exit()
+        '''
+
         jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
-        freqs_joins_index_min = freqs_joins.index(freqs[0])
-        freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
 
         fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
         ax_jones_i.set_title("jones " + a_team_source)
@@ -271,7 +304,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                   times, freqs * u.Hz)
 
-        jones_ratio = (jones_i_target/jones_i_ateam)
+        #jones_ratio = (jones_i_target/jones_i_ateam)
+        jones_ratio = (jones_i_ateam / jones_i_target)
         dynspec = dynspec * jones_ratio
         ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
@@ -307,6 +341,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         zenith_angle = 90 - elevation.value
         ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
         ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
+
+        #break
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
