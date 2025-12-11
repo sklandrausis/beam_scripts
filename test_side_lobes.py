@@ -180,16 +180,20 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                   'LBA', "Hamaker", obstimebeg,
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
 
-    jones_xx = np.abs(jones[:, :, 0, 0])
-    jones_yy = np.abs(jones[:, :, 1, 1])
-    jones_i = (jones_xx + jones_yy) /2
+    jones_tmp_target = np.abs(jones[:, :, 3, 3])
+
+    sys.exit()
+
+    jones_xx_target = np.abs(jones[:, :, 0, 0])
+    jones_yy_target = np.abs(jones[:, :, 1, 1])
+    jones_i_target = (jones_xx_target + jones_yy_target) /2
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
-    jones_i = jones_i[freqs_joins_index_min:freqs_joins_index_max, :]
+    jones_i_target = jones_i_target[freqs_joins_index_min:freqs_joins_index_max, :]
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_jones_i.set_title("jones")
-    im1_jones_i = ax_jones_i.imshow(jones_i, aspect="auto",
+    im1_jones_i = ax_jones_i.imshow(jones_i_target, aspect="auto",
                                           extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
     divider_jones_i = make_axes_locatable(ax_jones_i)
