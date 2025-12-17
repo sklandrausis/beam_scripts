@@ -320,8 +320,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             a_team_sum += dynspec_
 
-            del dynspec_
-
             im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                             vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
@@ -341,6 +339,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
             np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
+
+            del dynspec_
 
             elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
             elevation = elevation_azimuth.alt
