@@ -241,8 +241,6 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         print("Processing A-Team source", a_team_source)
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
 
-        obstimestp = timedelta(seconds=1)
-        obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
         pointingdir = (np.deg2rad(a_team_source_sky_coords.ra), np.deg2rad(a_team_source_sky_coords.dec), 'J2000')
         samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                             'LBA', "Hamaker", obstimebeg,
@@ -255,98 +253,101 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         jones_xy_ateam = jones[:, :, 1, 0]
         jones_yx_ateam = jones[:, :, 0, 1]
 
-        ''''
-        del fig_jones_i, ax_jones_i
-        fig_jones_i, ax_jones_i = plt.subplots(nrows=2, ncols=2, figsize=(16, 16), dpi=150, sharex=True, sharey=True)
-        ax_jones_i[0][0].imshow(jones_xx_ateam, aspect="auto",
-                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
-        ax_jones_i[1][1].imshow(jones_yy_ateam, aspect="auto",
-                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
-        ax_jones_i[1][0].imshow(jones_xy_ateam, aspect="auto",
-                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
-        ax_jones_i[0][1].imshow(jones_yx_ateam, aspect="auto",
-                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+        if np.sum(jones_xx_ateam) == 0:
+            ''''
+            del fig_jones_i, ax_jones_i
+            fig_jones_i, ax_jones_i = plt.subplots(nrows=2, ncols=2, figsize=(16, 16), dpi=150, sharex=True, sharey=True)
+            ax_jones_i[0][0].imshow(jones_xx_ateam, aspect="auto",
+                                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+            ax_jones_i[1][1].imshow(jones_yy_ateam, aspect="auto",
+                                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+            ax_jones_i[1][0].imshow(jones_xy_ateam, aspect="auto",
+                                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+            ax_jones_i[0][1].imshow(jones_yx_ateam, aspect="auto",
+                                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+    
+            ax_jones_i[0][0].xaxis_date()
+            ax_jones_i[0][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][0].xaxis.get_major_locator()))
+            ax_jones_i[0][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
+    
+            ax_jones_i[1][1].xaxis_date()
+            ax_jones_i[1][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][1].xaxis.get_major_locator()))
+            ax_jones_i[1][1].set_xlabel("Time", fontweight='bold')
+    
+            ax_jones_i[1][0].xaxis_date()
+            ax_jones_i[1][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][0].xaxis.get_major_locator()))
+            ax_jones_i[1][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax_jones_i[1][0].set_xlabel("Time", fontweight='bold')
+    
+            ax_jones_i[0][1].xaxis_date()
+            ax_jones_i[0][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][1].xaxis.get_major_locator()))
+    
+            plt.show()
+            sys.exit()
+            '''
 
-        ax_jones_i[0][0].xaxis_date()
-        ax_jones_i[0][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][0].xaxis.get_major_locator()))
-        ax_jones_i[0][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
+            jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
 
-        ax_jones_i[1][1].xaxis_date()
-        ax_jones_i[1][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][1].xaxis.get_major_locator()))
-        ax_jones_i[1][1].set_xlabel("Time", fontweight='bold')
+            fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax_jones_i.set_title("jones " + a_team_source)
+            im1_jones_i = ax_jones_i.imshow(jones_i_ateam, aspect="auto",
+                                            extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
-        ax_jones_i[1][0].xaxis_date()
-        ax_jones_i[1][0].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[1][0].xaxis.get_major_locator()))
-        ax_jones_i[1][0].set_ylabel("Frequencies [MHz]", fontweight='bold')
-        ax_jones_i[1][0].set_xlabel("Time", fontweight='bold')
+            divider_jones_i = make_axes_locatable(ax_jones_i)
+            cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
+            plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
 
-        ax_jones_i[0][1].xaxis_date()
-        ax_jones_i[0][1].xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i[0][1].xaxis.get_major_locator()))
+            ax_jones_i.xaxis_date()
+            ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+            ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax_jones_i.set_xlabel("Time", fontweight='bold')
 
-        plt.show()
-        sys.exit()
-        '''
+            dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
+                                                                      times, freqs * u.Hz)
 
-        jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
+            jones_ratio = (jones_i_ateam * jones_i_target)
+            dynspec = dynspec * jones_ratio
+            ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
-        fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-        ax_jones_i.set_title("jones " + a_team_source)
-        im1_jones_i = ax_jones_i.imshow(jones_i_ateam, aspect="auto",
-                                        extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax.set_title(a_team_source)
+            dynspec_ = np.zeros(dynspec.shape)
+            for f in range(0,dynspec.shape[1]):
+                dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
-        divider_jones_i = make_axes_locatable(ax_jones_i)
-        cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
-        plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+            a_team_sum += dynspec_
 
-        ax_jones_i.xaxis_date()
-        ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
-        ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
-        ax_jones_i.set_xlabel("Time", fontweight='bold')
+            '''
+            for f in range(0, a_team_sum.shape[1]):
+                a_team_sum[:, f] =  a_team_sum[:, f] / np.median(a_team_sum[:, f])
+                
+            '''
 
-        dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
-                                                                  times, freqs * u.Hz)
+            im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                            vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
-        #jones_ratio = (jones_i_target/jones_i_ateam)
-        jones_ratio = (jones_i_ateam / jones_i_target)
-        dynspec = dynspec * jones_ratio
-        ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
+            divider = make_axes_locatable(ax)
+            cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
+            plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-        ax.set_title(a_team_source)
-        dynspec_ = np.zeros(dynspec.shape)
-        for f in range(0,dynspec.shape[1]):
-            dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
+            ax.xaxis_date()
+            ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+            ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax.set_xlabel("Time", fontweight='bold')
 
-        a_team_sum += dynspec_
+            ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
 
-        for f in range(0, a_team_sum.shape[1]):
-            a_team_sum[:, f] =  a_team_sum[:, f] /np.median(a_team_sum[:, f])
+            ax2.set_xlabel("RA [deg]", fontweight='bold')
+            ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
-        im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
-                        vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
+            print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+            np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
 
-        divider = make_axes_locatable(ax)
-        cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
-        plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
-
-        ax.xaxis_date()
-        ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
-        ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
-        ax.set_xlabel("Time", fontweight='bold')
-
-        ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
-
-        ax2.set_xlabel("RA [deg]", fontweight='bold')
-        ax2.set_ylabel("DEC [deg]", fontweight='bold')
-
-        print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
-        np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
-
-        elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
-        elevation = elevation_azimuth.alt
-        zenith_angle = 90 - elevation.value
-        ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
-        ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
+            elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
+            elevation = elevation_azimuth.alt
+            zenith_angle = 90 - elevation.value
+            ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
+            ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
 
         #break
 
