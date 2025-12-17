@@ -253,7 +253,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         jones_xy_ateam = jones[:, :, 1, 0]
         jones_yx_ateam = jones[:, :, 0, 1]
 
-        if np.sum(jones_xx_ateam) == 0:
+        if np.sum(jones_xx_ateam) != 0:
             ''''
             del fig_jones_i, ax_jones_i
             fig_jones_i, ax_jones_i = plt.subplots(nrows=2, ncols=2, figsize=(16, 16), dpi=150, sharex=True, sharey=True)
