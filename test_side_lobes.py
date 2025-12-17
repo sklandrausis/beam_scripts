@@ -179,6 +179,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                   'LBA', "Hamaker", obstimebeg,
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
+
+
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
     jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
@@ -316,6 +318,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
         a_team_sum += dynspec_
+
+        for f in range(0, a_team_sum.shape[1]):
+            a_team_sum[:, f] =  a_team_sum[:, f] /np.median(a_team_sum[:, f])
+
         im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                         vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
