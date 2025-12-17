@@ -224,7 +224,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     jones_i_target = (jones_xx_target + jones_yy_target) /2
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    ax_jones_i.set_title("jones")
+    ax_jones_i.set_title("jones " + target_source)
     im1_jones_i = ax_jones_i.imshow(jones_i_target, aspect="auto",
                                           extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
@@ -305,7 +305,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                       times, freqs * u.Hz)
 
-            jones_ratio = (jones_i_ateam * jones_i_target)
+            jones_ratio = (jones_i_ateam / jones_i_target)
             dynspec = dynspec * jones_ratio
             ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
