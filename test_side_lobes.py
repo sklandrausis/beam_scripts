@@ -315,13 +315,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             for f in range(0,dynspec.shape[1]):
                 dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
+            for f in range(0, dynspec_.shape[1]):
+                dynspec_[:, f] = dynspec_[:, f] / np.median(dynspec_[:, f])
+
             a_team_sum += dynspec_
 
-            '''
-            for f in range(0, a_team_sum.shape[1]):
-                a_team_sum[:, f] =  a_team_sum[:, f] / np.median(a_team_sum[:, f])
-                
-            '''
+            del dynspec_
 
             im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                             vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
