@@ -332,8 +332,13 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                   np.min(dynspec_))
 
             #'''
+<<<<<<< HEAD
             for f in range(0, dynspec_.shape[1]):
                 dynspec_[:, f] = dynspec_[:, f] / np.median(dynspec_[:, f])
+=======
+            for t in range(0, dynspec_.shape[0]):
+                dynspec_[t, :] = dynspec_[t, :] / np.median(dynspec_[t, :])
+>>>>>>> 9b541b1cc37cd5c62aae36fccfff2b4ada13afb6
                 
             #'''
 
