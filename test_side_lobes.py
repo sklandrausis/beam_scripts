@@ -175,7 +175,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     obstimestp = timedelta(seconds=1)
     obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
-    pointingdir = (np.deg2rad(phasedir.ra), np.deg2rad(phasedir.dec), 'J2000')
+    pointingdir = (np.deg2rad(phasedir.ra.deg), np.deg2rad(phasedir.dec.deg), 'J2000')
     samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                   'LBA', "Hamaker", obstimebeg,
                                                                   timedelta(seconds=duration-1), obstimestp, pointingdir)
@@ -244,7 +244,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         print("Processing A-Team source", a_team_source)
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
 
-        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra), np.deg2rad(a_team_source_sky_coords.dec), 'J2000')
+        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra.deg), np.deg2rad(a_team_source_sky_coords.dec.deg), 'J2000')
         samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                             'LBA', "Hamaker", obstimebeg,
                                                                             timedelta(seconds=duration - 1), obstimestp,
@@ -312,6 +312,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
+            jones_i_ateam[np.isnan(jones_i_ateam)] = 0
             jones_ratio = (jones_i_ateam / jones_i_target)
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
 
@@ -332,6 +333,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             for f in range(0, dynspec_.shape[1]):
                 dynspec_[:, f] = dynspec_[:, f] / np.median(dynspec_[:, f])
+
+            dynspec_[np.isnan(dynspec_)] = 0
 
             print("corrected beam model FLUX normalized ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
                   np.min(dynspec_))
@@ -369,6 +372,11 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             zenith_angle = 90 - elevation.value
             ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
             ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
+
+        else:
+            print("new a_team_sum max, min for A-Team source " + a_team_source,
+                  np.max(a_team_sum),
+                  np.min(a_team_sum))
 
         #break
         print("\n\n\n")
