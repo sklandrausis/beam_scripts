@@ -190,6 +190,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     jones_xy_target = jones[:, :, 1, 0]
     jones_yx_target = jones[:, :, 0, 1]
 
+    print("JONES max, min for target source ", np.max(jones_xx_target), np.min(jones_xx_target))
+
     '''
     fig_jones_i, ax_jones_i = plt.subplots(nrows=2, ncols=2, figsize=(16, 16), dpi=150, sharex=True, sharey=True)
     ax_jones_i[0][0].imshow(jones_xx_target, aspect="auto",
@@ -237,6 +239,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
     ax_jones_i.set_xlabel("Time", fontweight='bold')
 
+    print("\n\n\n")
     for a_team_source in a_team_sources:
         print("Processing A-Team source", a_team_source)
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
@@ -252,6 +255,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         jones_yy_ateam = jones[:, :, 1, 1]
         jones_xy_ateam = jones[:, :, 1, 0]
         jones_yx_ateam = jones[:, :, 0, 1]
+
+        print("JONES max, min for A-Team source " + a_team_source, np.max(jones_xx_ateam), np.min(jones_xx_ateam))
 
         if np.sum(jones_xx_ateam) != 0:
             ''''
@@ -305,8 +310,15 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                       times, freqs * u.Hz)
 
+            print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
+
             jones_ratio = (jones_i_ateam / jones_i_target)
+            print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
+
             dynspec = dynspec * jones_ratio
+            print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec),
+                  np.min(dynspec))
+
             ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
@@ -315,10 +327,20 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             for f in range(0,dynspec.shape[1]):
                 dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
 
+            print("corrected beam model FLUX ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
+                  np.min(dynspec_))
+
             for f in range(0, dynspec_.shape[1]):
                 dynspec_[:, f] = dynspec_[:, f] / np.median(dynspec_[:, f])
 
+            print("corrected beam model FLUX normalized ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
+                  np.min(dynspec_))
+
             a_team_sum += dynspec_
+
+            print("new a_team_sum max, min for A-Team source " + a_team_source,
+                  np.max(a_team_sum),
+                  np.min(a_team_sum))
 
             im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
                             vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
@@ -349,6 +371,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
 
         #break
+        print("\n\n\n")
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
