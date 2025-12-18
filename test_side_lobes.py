@@ -334,10 +334,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             #'''
             for t in range(0, dynspec_.shape[0]):
                 dynspec_[t, :] = dynspec_[t, :] / np.median(dynspec_[t, :])
-                
             #'''
 
             dynspec_[np.isnan(dynspec_)] = 0
+            dynspec_[np.isinf(dynspec_)] = 0
 
             print("corrected beam model FLUX normalized ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
                   np.min(dynspec_))
