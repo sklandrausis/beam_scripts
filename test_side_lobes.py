@@ -331,11 +331,11 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             print("corrected beam model FLUX ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
                   np.min(dynspec_))
 
-            '''
+            #'''
             for f in range(0, dynspec_.shape[1]):
                 dynspec_[:, f] = dynspec_[:, f] / np.median(dynspec_[:, f])
                 
-            '''
+            #'''
 
             dynspec_[np.isnan(dynspec_)] = 0
 
