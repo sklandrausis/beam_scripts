@@ -11,7 +11,6 @@ import numpy
 import numpy as np
 from astropy.coordinates import AltAz, SkyCoord, EarthLocation, ITRS
 import astropy.units as u
-from astropy.time import Time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from dreambeam.rime.scenarios import on_pointing_axis_tracking
 
