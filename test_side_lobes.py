@@ -19,23 +19,9 @@ from getDynspecBeam import getDynspec, mydb
 
 plt.style.use(os.path.expanduser('~') + "/.config/lofar/plot.style")
 
+def get_jones_gain(jones_xx, jones_yy, jones_xy, jones_yx):
+    return np.sqrt(jones_xx**2 + jones_yy**2 + jones_xy**2 + jones_yx**2)
 
-def radec_to_xyz(ra, dec, time):
-    """
-    Convert RA and Dec ICRS coordinates to ITRS cartesian coordinates.
-
-    Args:
-        ra (astropy.coordinates.Angle): Right ascension
-        dec (astropy.coordinates.Angle): Declination
-        time (float): MJD time in seconds
-
-    Returns:
-        pointing_xyz (ndarray): NumPy array containing the ITRS X, Y and Z coordinates
-    """
-    obstime = Time(time/3600/24, scale='utc', format='mjd')
-    dir_pointing = SkyCoord(ra, dec)
-    dir_pointing_itrs = dir_pointing.transform_to(ITRS(obstime=obstime))
-    return np.asarray(dir_pointing_itrs.cartesian.xyz.transpose())
 
 def model_flux(calibrator, frequency, sun_true=False):
     """
@@ -223,11 +209,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     sys.exit()
     '''
 
-    jones_i_target = (jones_xx_target + jones_yy_target) /2
+    #jones_i_target = (jones_xx_target + jones_yy_target) /2
+    jones_gain_target = get_jones_gain(jones_xx_target, jones_yy_target, jones_xy_target, jones_yx_target)
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_jones_i.set_title("jones " + target_source)
-    im1_jones_i = ax_jones_i.imshow(jones_i_target, aspect="auto",
+    im1_jones_i = ax_jones_i.imshow(jones_gain_target, aspect="auto",
                                           extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
     divider_jones_i = make_axes_locatable(ax_jones_i)
@@ -291,11 +278,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             sys.exit()
             '''
 
-            jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
+            #jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
+            jones_gain_ateam = get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
 
             fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
             ax_jones_i.set_title("jones " + a_team_source)
-            im1_jones_i = ax_jones_i.imshow(jones_i_ateam, aspect="auto",
+            im1_jones_i = ax_jones_i.imshow(jones_gain_ateam, aspect="auto",
                                             extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
             divider_jones_i = make_axes_locatable(ax_jones_i)
@@ -312,8 +300,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
-            jones_i_ateam[np.isnan(jones_i_ateam)] = 0
-            jones_ratio = (jones_i_ateam / jones_i_target)
+            jones_gain_ateam[np.isnan(jones_gain_ateam)] = 0
+            jones_ratio = (jones_gain_ateam / jones_gain_target)
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
 
             dynspec = dynspec * jones_ratio
