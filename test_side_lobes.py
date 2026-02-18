@@ -191,7 +191,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
             #jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
             jones_gain_ateam = get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
-
+            
             fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
             ax_jones_i.set_title("jones " + a_team_source)
             im1_jones_i = ax_jones_i.imshow(jones_gain_ateam, aspect="auto",
@@ -209,6 +209,11 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
                                                                       Time(times), freqs * u.Hz)
 
+            
+            np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction", dynspec)
+
+            dynspec_flux = np.copy(dynspec)
+
             print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
             jones_gain_ateam[np.isnan(jones_gain_ateam)] = 0
@@ -225,6 +230,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             dynspec_ = np.zeros(dynspec.shape)
             for f in range(0,dynspec.shape[1]):
                 dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
+                dynspec_flux[:, f] = dynspec_flux[:, f] * (ateam_source_flux/target_source_flux)
+
+            np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction_flux", dynspec_flux)
+            del dynspec_flux
 
             print("corrected beam model FLUX ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
                   np.min(dynspec_))
