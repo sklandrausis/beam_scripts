@@ -323,6 +323,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
 if __name__ == "__main__":
     # python3.10 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 46800
+    # python3.12 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 100
 
     parser = argparse.ArgumentParser(description='Create side lobes model for given target source')
     parser.add_argument('station', type=str, help='name of the station')
