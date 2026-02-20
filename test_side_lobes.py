@@ -138,19 +138,20 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
-    jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
+    jones_inv = np.abs(np.linalg.inv(jones))
 
-    jones_xx_target = jones[:, :, 0, 0]
-    jones_yy_target = jones[:, :, 1, 1]
-    jones_xy_target = jones[:, :, 1, 0]
-    jones_yx_target = jones[:, :, 0, 1]
+    jones_inv_select_freq = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
+    jones_xx_target = jones_inv_select_freq[:, :, 0, 0]
+    jones_yy_target = jones_inv_select_freq[:, :, 1, 1]
+    jones_xy_target = jones_inv_select_freq[:, :, 1, 0]
+    jones_yx_target = jones_inv_select_freq[:, :, 0, 1]
 
     del samptimes, freqs_joins, jones, jonesobj
 
     print("JONES XX max, min for target source ", np.max(jones_xx_target), np.min(jones_xx_target))
 
-    #jones_i_target = (jones_xx_target + jones_yy_target) /2
-    jones_gain_target = get_jones_gain(jones_xx_target, jones_yy_target, jones_xy_target, jones_yx_target)
+    jones_gain_target = (jones_xx_target + jones_yy_target)
+    #jones_gain_target = get_jones_gain(jones_xx_target, jones_yy_target, jones_xy_target, jones_yx_target)
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_jones_i.set_title("jones " + target_source)
@@ -176,12 +177,13 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                             'LBA', "Hamaker", obstimebeg,
                                                                             timedelta(seconds=duration - 1), obstimestp,
                                                                             pointingdir)
+        jones_inv = np.abs(np.linalg.inv(jones))
 
-        jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
-        jones_xx_ateam = jones[:, :, 0, 0]
-        jones_yy_ateam = jones[:, :, 1, 1]
-        jones_xy_ateam = jones[:, :, 1, 0]
-        jones_yx_ateam = jones[:, :, 0, 1]
+        jones_inv_select_freq = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
+        jones_xx_ateam = jones_inv_select_freq[:, :, 0, 0]
+        jones_yy_ateam = jones_inv_select_freq[:, :, 1, 1]
+        jones_xy_ateam = jones_inv_select_freq[:, :, 1, 0]
+        jones_yx_ateam = jones_inv_select_freq[:, :, 0, 1]
 
         del samptimes, freqs_joins, jones, jonesobj
 
@@ -190,7 +192,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         if np.sum(jones_xx_ateam) != 0:
 
             #jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
-            jones_gain_ateam = get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
+            jones_gain_ateam = jones_xx_ateam + jones_yy_ateam #get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
             
             fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
             ax_jones_i.set_title("jones " + a_team_source)
@@ -220,7 +222,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             jones_ratio = (jones_gain_ateam / jones_gain_target)
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
 
-            dynspec = dynspec * jones_ratio
+            dynspec_corrected_by_pointing_jones = np.matmul(dynspec, jones_ratio.T)
             print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
             ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
@@ -229,7 +231,7 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             ax.set_title(a_team_source)
             dynspec_ = np.zeros(dynspec.shape)
             for f in range(0,dynspec.shape[1]):
-                dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux/target_source_flux)
+                dynspec_[:, f] = dynspec_corrected_by_pointing_jones[:, f] * (ateam_source_flux/target_source_flux)
                 dynspec_flux[:, f] = dynspec_flux[:, f] * (ateam_source_flux/target_source_flux)
 
             np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction_flux", dynspec_flux)
