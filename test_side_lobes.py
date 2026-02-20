@@ -177,6 +177,9 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                             'LBA', "Hamaker", obstimebeg,
                                                                             timedelta(seconds=duration - 1), obstimestp,
                                                                             pointingdir)
+        
+
+       
         jones_inv = np.abs(np.linalg.inv(jones))
 
         jones_inv_select_freq = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
@@ -222,7 +225,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             jones_ratio = (jones_gain_ateam / jones_gain_target)
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
 
-            dynspec_corrected_by_pointing_jones = np.matmul(dynspec, jones_ratio.T)
+
+            dynspec_corrected_by_pointing_jones = dynspec * jones_ratio
+
+
             print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
             ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
@@ -230,6 +236,11 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
             ax.set_title(a_team_source)
             dynspec_ = np.zeros(dynspec.shape)
+            
+            #test (162, 162) (162, 46800) (162, 46800)
+            print("test", dynspec_corrected_by_pointing_jones.shape, dynspec.shape, jones_ratio.shape)
+            #sys.exit()
+
             for f in range(0,dynspec.shape[1]):
                 dynspec_[:, f] = dynspec_corrected_by_pointing_jones[:, f] * (ateam_source_flux/target_source_flux)
                 dynspec_flux[:, f] = dynspec_flux[:, f] * (ateam_source_flux/target_source_flux)
