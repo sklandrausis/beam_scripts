@@ -138,16 +138,12 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
-    #jones_inv = np.linalg.inv(jones)
-    jones_inv = jones
 
-    jones_inv_select_freq_3c = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
-    jones_xx_target = jones_inv_select_freq_3c[:, :, 0, 0]
-    jones_yy_target = jones_inv_select_freq_3c[:, :, 1, 1]
-    jones_xy_target = jones_inv_select_freq_3c[:, :, 1, 0]
-    jones_yx_target = jones_inv_select_freq_3c[:, :, 0, 1]
-
-    jones_inv_select_freq_3c[np.isnan(jones_inv_select_freq_3c)] = 0
+    jones_select_freq_3c = jones[freqs_joins_index_min:freqs_joins_index_max, :]
+    jones_xx_target = jones_select_freq_3c[:, :, 0, 0]
+    jones_yy_target = jones_select_freq_3c[:, :, 1, 1]
+    jones_xy_target = jones_select_freq_3c[:, :, 1, 0]
+    jones_yx_target = jones_select_freq_3c[:, :, 0, 1]
 
     del samptimes, freqs_joins, jones, jonesobj
 
@@ -182,23 +178,17 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                             pointingdir)
 
         try:
-            #jones_inv = np.linalg.inv(jones)
-
-            jones_inv = jones
-
-            jones_inv_select_freq_ateam = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
-            jones_xx_ateam = jones_inv_select_freq_ateam[:, :, 0, 0]
-            jones_yy_ateam = jones_inv_select_freq_ateam[:, :, 1, 1]
-            jones_xy_ateam = jones_inv_select_freq_ateam[:, :, 1, 0]
-            jones_yx_ateam = jones_inv_select_freq_ateam[:, :, 0, 1]
+            jones_select_freq_ateam = jones[freqs_joins_index_min:freqs_joins_index_max, :]
+            jones_xx_ateam = jones_select_freq_ateam[:, :, 0, 0]
+            jones_yy_ateam = jones_select_freq_ateam[:, :, 1, 1]
+            jones_xy_ateam = jones_select_freq_ateam[:, :, 1, 0]
+            jones_yx_ateam = jones_select_freq_ateam[:, :, 0, 1]
 
             del samptimes, freqs_joins, jones, jonesobj
 
             print("JONES xx max, min for A-Team source " + a_team_source, np.max(np.abs(jones_xx_ateam)), np.min(np.abs(jones_xx_ateam)))
 
             if np.sum(np.abs(jones_xx_ateam)) != 0:
-
-                #jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
                 jones_i_ateam = jones_xx_ateam + jones_yy_ateam #get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
 
                 fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
@@ -225,22 +215,10 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
                 print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
-                geometric_beam_matrix_multiplyde_by_inv_jones_ = np.zeros(jones_inv_select_freq_ateam.shape)
-
-                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 0, 0] = dynspec
-                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 1, 1] = dynspec
-
-                jones_inv_select_freq_ateam[np.isnan(jones_inv_select_freq_ateam)] = 0
-
-                jones_ratio = (jones_inv_select_freq_ateam / jones_inv_select_freq_3c)
+                jones_ratio = (jones_select_freq_ateam / jones_select_freq_3c)
                 print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
 
-                geometric_beam_matrix_multiplyde_by_inv_jones = np.matmul(geometric_beam_matrix_multiplyde_by_inv_jones_, jones_ratio)
-
-                dynspec_corrected_by_pointing_jones = (geometric_beam_matrix_multiplyde_by_inv_jones[:, :, 0, 0]
-                                                       + geometric_beam_matrix_multiplyde_by_inv_jones[:, :, 1, 1])
-
-                dynspec_corrected_by_pointing_jones = np.abs(dynspec_corrected_by_pointing_jones)
+                dynspec_corrected_by_pointing_jones = np.abs(jones_ratio)[:, :, 0, 0] * dynspec
 
                 print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
