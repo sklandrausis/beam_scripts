@@ -224,8 +224,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
                 geometric_beam_matrix_multiplyde_by_inv_jones_ = np.zeros(jones_inv_select_freq_ateam.shape)
 
-                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 0, 0] = dynspec * 0.5
-                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 1, 1] = dynspec * 0.5
+                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 0, 0] = dynspec
+                geometric_beam_matrix_multiplyde_by_inv_jones_[:, :, 1, 1] = dynspec
 
                 jones_inv_select_freq_ateam[np.isnan(jones_inv_select_freq_ateam)] = 0
 
