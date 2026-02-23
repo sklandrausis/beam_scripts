@@ -138,7 +138,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
 
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
-    jones_inv = np.linalg.inv(jones)
+    #jones_inv = np.linalg.inv(jones)
+    jones_inv = jones
 
     jones_inv_select_freq_3c = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
     jones_xx_target = jones_inv_select_freq_3c[:, :, 0, 0]
@@ -181,7 +182,9 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                                                                             pointingdir)
 
         try:
-            jones_inv = np.linalg.inv(jones)
+            #jones_inv = np.linalg.inv(jones)
+
+            jones_inv = jones
 
             jones_inv_select_freq_ateam = jones_inv[freqs_joins_index_min:freqs_joins_index_max, :]
             jones_xx_ateam = jones_inv_select_freq_ateam[:, :, 0, 0]
