@@ -237,6 +237,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
                 dynspec_corrected_by_pointing_jones = (geometric_beam_matrix_multiplyde_by_inv_jones[:, :, 0, 0]
                                                        + geometric_beam_matrix_multiplyde_by_inv_jones[:, :, 1, 1])
 
+                dynspec_corrected_by_pointing_jones = np.abs(dynspec_corrected_by_pointing_jones)
+
                 print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
                 ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
