@@ -318,6 +318,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
     ax_a_team_sum.set_xlabel("Time", fontweight='bold')
 
     np.save(output_dir_name + "a_team_sum", a_team_sum)
+    np.save(output_dir_name + "a_team_sum_before_flux", a_team_sum_before_flux)
 
     ax_zenith_angle.set_ylabel("Zenith angle [deg]")
     ax_zenith_angle.set_xlabel("Time")
