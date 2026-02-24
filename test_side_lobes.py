@@ -19,8 +19,9 @@ from getDynspecBeam import getDynspec, mydb
 
 plt.style.use(os.path.expanduser('~') + "/.config/lofar/plot.style")
 
+
 def get_jones_gain(jones_xx, jones_yy, jones_xy, jones_yx):
-    return np.sqrt(jones_xx**2 + jones_yy**2 + jones_xy**2 + jones_yx**2)
+    return np.sqrt(jones_xx ** 2 + jones_yy ** 2 + jones_xy ** 2 + jones_yx ** 2)
 
 
 def model_flux(calibrator, frequency, sun_true=False):
@@ -70,10 +71,10 @@ def model_flux(calibrator, frequency, sun_true=False):
         parameters = Cal_dict[calibrator]
     else:
         parameters = [1., 0.]
-        #raise ValueError(calibrator, "is not in the calibrators list")
+        # raise ValueError(calibrator, "is not in the calibrators list")
 
     flux_model = 0
-    frequency = frequency * 0.001 # convert from MHz to GHz
+    frequency = frequency * 0.001  # convert from MHz to GHz
     for j, p in enumerate(parameters):
         flux_model += p * numpy.log10(frequency) ** j
     flux_model = 10 ** flux_model  # because at first the flux is in log10
@@ -83,19 +84,23 @@ def model_flux(calibrator, frequency, sun_true=False):
     else:
         return flux_model
 
+
 def sb_to_freq(subband_min, subband_max, rcumode, clock):
-    n=1
+    n = 1
 
     if rcumode == 1 or rcumode == 2 or rcumode == 3 or rcumode == 4:  # 0 MHz - 100 MHz
         n = 1
     elif rcumode == 5:  # 100 MHz - 200 MHz
         n = 2
-    else: # 200 MHz - 300 MHz
+    else:  # 200 MHz - 300 MHz
         n = 3
 
-    return np.linspace((n-1 + (subband_min/512))*(clock/2), (n-1 + (subband_max/512))*(clock/2), subband_max - subband_min + 1) #MHz
+    return np.linspace((n - 1 + (subband_min / 512)) * (clock / 2), (n - 1 + (subband_max / 512)) * (clock / 2),
+                       subband_max - subband_min + 1)  # MHz
 
-def main(station, rcumode, subband_min,  subband_max,  target_source, start_time, duration, clock=200, output_dir_name="/mnt/LOFAR0/beam_scripts/"):
+
+def main(station, rcumode, subband_min, subband_max, target_source, start_time, duration, clock=200,
+         output_dir_name="/mnt/LOFAR0/beam_scripts/"):
     # Frequency range
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
@@ -117,6 +122,8 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     a_team_sources = ["Cas A", "Cyg A", "Tau A", "For A", "Her A", "Pic A"]
     a_team_sum = np.zeros((len(freqs), len(times)))
 
+    a_team_sum_before_flux = np.zeros((len(freqs), len(times)))
+
     fig_zenith_angle, ax_zenith_angle = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig_zenith_angle_cos, ax_zenith_angle_cos = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
@@ -127,35 +134,36 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     elevation = elevation_azimuth_target_source.alt
     zenith_angle = 90 - elevation.value
     ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=target_source)
-    ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) **2, label=target_source)
+    ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=target_source)
 
     obstimestp = timedelta(seconds=1)
     obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
     pointingdir = (np.deg2rad(phasedir.ra.deg), np.deg2rad(phasedir.dec.deg), 'J2000')
     samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
-                                                                  'LBA', "Hamaker", obstimebeg,
-                                                                  timedelta(seconds=duration-1), obstimestp, pointingdir)
+                                                                        'LBA', "Hamaker", obstimebeg,
+                                                                        timedelta(seconds=duration - 1), obstimestp,
+                                                                        pointingdir)
 
     freqs_joins_index_min = freqs_joins.index(freqs[0])
     freqs_joins_index_max = freqs_joins.index(freqs[-1]) + 1
+    jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
 
-    jones_select_freq_3c = jones[freqs_joins_index_min:freqs_joins_index_max, :]
-    jones_xx_target = jones_select_freq_3c[:, :, 0, 0]
-    jones_yy_target = jones_select_freq_3c[:, :, 1, 1]
-    jones_xy_target = jones_select_freq_3c[:, :, 1, 0]
-    jones_yx_target = jones_select_freq_3c[:, :, 0, 1]
+    jones_xx_target = jones[:, :, 0, 0]
+    jones_yy_target = jones[:, :, 1, 1]
+    jones_xy_target = jones[:, :, 1, 0]
+    jones_yx_target = jones[:, :, 0, 1]
 
     del samptimes, freqs_joins, jones, jonesobj
 
     print("JONES XX max, min for target source ", np.max(jones_xx_target), np.min(jones_xx_target))
 
-    jones_i_target = (jones_xx_target + jones_yy_target)
-    #jones_gain_target = get_jones_gain(jones_xx_target, jones_yy_target, jones_xy_target, jones_yx_target)
+    # jones_i_target = (jones_xx_target + jones_yy_target) /2
+    jones_gain_target = get_jones_gain(jones_xx_target, jones_yy_target, jones_xy_target, jones_yx_target)
 
     fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     ax_jones_i.set_title("jones " + target_source)
-    im1_jones_i = ax_jones_i.imshow(np.abs(jones_i_target), aspect="auto",
-                                          extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+    im1_jones_i = ax_jones_i.imshow(jones_gain_target, aspect="auto",
+                                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
 
     divider_jones_i = make_axes_locatable(ax_jones_i)
     cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
@@ -171,134 +179,134 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
         print("Processing A-Team source", a_team_source)
         a_team_source_sky_coords = SkyCoord.from_name(a_team_source)
 
-        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra.deg), np.deg2rad(a_team_source_sky_coords.dec.deg), 'J2000')
+        pointingdir = (np.deg2rad(a_team_source_sky_coords.ra.deg), np.deg2rad(a_team_source_sky_coords.dec.deg),
+                       'J2000')
         samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
                                                                             'LBA', "Hamaker", obstimebeg,
                                                                             timedelta(seconds=duration - 1), obstimestp,
                                                                             pointingdir)
 
-        try:
-            jones_select_freq_ateam = jones[freqs_joins_index_min:freqs_joins_index_max, :]
-            jones_xx_ateam = jones_select_freq_ateam[:, :, 0, 0]
-            jones_yy_ateam = jones_select_freq_ateam[:, :, 1, 1]
-            jones_xy_ateam = jones_select_freq_ateam[:, :, 1, 0]
-            jones_yx_ateam = jones_select_freq_ateam[:, :, 0, 1]
+        jones = np.abs(jones)[freqs_joins_index_min:freqs_joins_index_max, :]
+        jones_xx_ateam = jones[:, :, 0, 0]
+        jones_yy_ateam = jones[:, :, 1, 1]
+        jones_xy_ateam = jones[:, :, 1, 0]
+        jones_yx_ateam = jones[:, :, 0, 1]
 
-            del samptimes, freqs_joins, jones, jonesobj
+        del samptimes, freqs_joins, jones, jonesobj
 
-            print("JONES xx max, min for A-Team source " + a_team_source, np.max(np.abs(jones_xx_ateam)), np.min(np.abs(jones_xx_ateam)))
+        print("JONES xx max, min for A-Team source " + a_team_source, np.max(jones_xx_ateam), np.min(jones_xx_ateam))
 
-            if np.sum(np.abs(jones_xx_ateam)) != 0:
-                jones_i_ateam = jones_xx_ateam + jones_yy_ateam #get_jones_gain(jones_xx_ateam, jones_yy_ateam,  jones_xy_ateam, jones_yx_ateam)
+        if np.sum(jones_xx_ateam) != 0:
 
-                fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-                ax_jones_i.set_title("jones " + a_team_source)
-                im1_jones_i = ax_jones_i.imshow(np.abs(jones_i_ateam), aspect="auto",
-                                                extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]])
+            # jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
+            jones_gain_ateam = get_jones_gain(jones_xx_ateam, jones_yy_ateam, jones_xy_ateam, jones_yx_ateam)
 
-                divider_jones_i = make_axes_locatable(ax_jones_i)
-                cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
-                plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+            fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax_jones_i.set_title("jones " + a_team_source)
+            im1_jones_i = ax_jones_i.imshow(jones_gain_ateam, aspect="auto",
+                                            extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1],
+                                                    freqs_[0]])
 
-                ax_jones_i.xaxis_date()
-                ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
-                ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
-                ax_jones_i.set_xlabel("Time", fontweight='bold')
+            divider_jones_i = make_axes_locatable(ax_jones_i)
+            cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
+            plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
 
-                dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir,
-                                                                          Time(times), freqs * u.Hz)
+            ax_jones_i.xaxis_date()
+            ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+            ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax_jones_i.set_xlabel("Time", fontweight='bold')
 
+            dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords,
+                                                                      phasedir,
+                                                                      Time(times), freqs * u.Hz)
 
-                np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction", dynspec)
+            np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction", dynspec)
 
-                dynspec_flux = np.copy(dynspec)
+            dynspec_flux = np.copy(dynspec)
 
-                print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
+            print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
-                jones_ratio = (jones_select_freq_ateam / jones_select_freq_3c)
-                print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio), np.min(jones_ratio))
+            jones_gain_ateam[np.isnan(jones_gain_ateam)] = 0
+            jones_ratio = (jones_gain_ateam / jones_gain_target)
+            print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio),
+                  np.min(jones_ratio))
 
-                dynspec_corrected_by_pointing_jones = np.abs(jones_ratio)[:, :, 0, 0] * dynspec
+            dynspec = dynspec * jones_ratio
+            a_team_sum_before_flux += dynspec
 
-                print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
+            print("corrected beam model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
-                ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
+            ateam_source_flux = model_flux(a_team_source, freqs_, sun_true=False)
 
-                fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-                ax.set_title(a_team_source)
-                dynspec_ = np.zeros(dynspec.shape)
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax.set_title(a_team_source)
+            dynspec_ = np.zeros(dynspec.shape)
+            for f in range(0, dynspec.shape[1]):
+                dynspec_[:, f] = dynspec[:, f] * (ateam_source_flux / target_source_flux)
+                dynspec_flux[:, f] = dynspec_flux[:, f] * (ateam_source_flux / target_source_flux)
 
-                #test (162, 162) (162, 46800) (162, 46800)
-                print("test", dynspec_corrected_by_pointing_jones.shape, dynspec.shape, jones_ratio.shape)
-                #sys.exit()
+            np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction_flux", dynspec_flux)
+            del dynspec_flux
 
-                for f in range(0,dynspec.shape[1]):
-                    dynspec_[:, f] = dynspec_corrected_by_pointing_jones[:, f] * (ateam_source_flux/target_source_flux)
-                    dynspec_flux[:, f] = dynspec_flux[:, f] * (ateam_source_flux/target_source_flux)
+            print("corrected beam model FLUX ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
+                  np.min(dynspec_))
 
-                np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction_flux", dynspec_flux)
-                del dynspec_flux
+            dynspec_[np.isnan(dynspec_)] = 0
+            dynspec_[np.isinf(dynspec_)] = 0
 
-                print("corrected beam model FLUX ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
-                      np.min(dynspec_))
+            print("corrected beam model FLUX normalized ratio max, min for A-Team source " + a_team_source,
+                  np.max(dynspec_),
+                  np.min(dynspec_))
 
-                dynspec_[np.isnan(dynspec_)] = 0
-                dynspec_[np.isinf(dynspec_)] = 0
+            a_team_sum += dynspec_
 
-                print("corrected beam model FLUX normalized ratio max, min for A-Team source " + a_team_source, np.max(dynspec_),
-                      np.min(dynspec_))
+            print("new a_team_sum max, min for A-Team source " + a_team_source,
+                  np.max(a_team_sum),
+                  np.min(a_team_sum))
 
-                a_team_sum += dynspec_
+            im1 = ax.imshow(dynspec_, aspect="auto",
+                            extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                            vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
 
-                print("new a_team_sum max, min for A-Team source " + a_team_source,
-                      np.max(a_team_sum),
-                      np.min(a_team_sum))
+            divider = make_axes_locatable(ax)
+            cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
+            plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
 
-                im1 = ax.imshow(dynspec_, aspect="auto", extent=[md.date2num(times[0]),md.date2num(times[-1]), freqs_[-1], freqs_[0]],
-                                vmin=np.percentile(dynspec_, 1), vmax=np.percentile(dynspec_, 99))
+            ax.xaxis_date()
+            ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+            ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax.set_xlabel("Time", fontweight='bold')
 
-                divider = make_axes_locatable(ax)
-                cax1 = divider.append_axes("right", size="5%", pad=0.07, label="flux ratio")
-                plt.colorbar(im1, ax=ax, cax=cax1, label="flux ratio")
+            ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
 
-                ax.xaxis_date()
-                ax.xaxis.set_major_formatter(md.ConciseDateFormatter(ax.xaxis.get_major_locator()))
-                ax.set_ylabel("Frequencies [MHz]", fontweight='bold')
-                ax.set_xlabel("Time", fontweight='bold')
+            ax2.set_xlabel("RA [deg]", fontweight='bold')
+            ax2.set_ylabel("DEC [deg]", fontweight='bold')
 
-                ax2.scatter(a_team_source_sky_coords.ra, a_team_source_sky_coords.dec, 100, label=a_team_source)
+            print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
+            np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
 
-                ax2.set_xlabel("RA [deg]", fontweight='bold')
-                ax2.set_ylabel("DEC [deg]", fontweight='bold')
+            del dynspec_
 
-                print("Separation [deg]", a_team_source_sky_coords.separation(phasedir).deg)
-                np.save(output_dir_name + a_team_source.replace(" ", ""), dynspec_)
+            elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
+            elevation = elevation_azimuth.alt
+            zenith_angle = 90 - elevation.value
+            ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
+            ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
 
-                del dynspec_
+        else:
+            print("new a_team_sum max, min for A-Team source " + a_team_source,
+                  np.max(a_team_sum),
+                  np.min(a_team_sum))
 
-                elevation_azimuth = a_team_source_sky_coords.transform_to(frame)
-                elevation = elevation_azimuth.alt
-                zenith_angle = 90 - elevation.value
-                ax_zenith_angle.scatter(md.date2num(times), zenith_angle, label=a_team_source)
-                ax_zenith_angle_cos.scatter(md.date2num(times), np.cos(np.deg2rad(zenith_angle)) ** 2, label=a_team_source)
-
-            else:
-                print("new a_team_sum max, min for A-Team source " + a_team_source,
-                      np.max(a_team_sum),
-                      np.min(a_team_sum))
-
-            #break
-            print("\n\n\n")
-            
-        except:
-            pass
+        # break
+        print("\n\n\n")
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
     ax_a_team_sum.set_title("a team sum")
     im1_a_team_sum = ax_a_team_sum.imshow(a_team_sum, aspect="auto",
-                    extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
-                    vmin=np.percentile(a_team_sum, 1), vmax=np.percentile(a_team_sum, 99))
+                                          extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1], freqs_[0]],
+                                          vmin=np.percentile(a_team_sum, 1), vmax=np.percentile(a_team_sum, 99))
 
     divider_ax_a_team_sum = make_axes_locatable(ax_a_team_sum)
     cax1_ax_a_team_sum = divider_ax_a_team_sum.append_axes("right", size="5%", pad=0.07, label="flux ratio")
@@ -319,16 +327,17 @@ def main(station, rcumode, subband_min,  subband_max,  target_source, start_time
     ax_zenith_angle_cos.set_ylabel(r'$cos (Zenith\ angle) ^2$')
     ax_zenith_angle_cos.set_xlabel("Time")
     ax_zenith_angle_cos.xaxis_date()
-    ax_zenith_angle_cos.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_zenith_angle_cos.xaxis.get_major_locator()))
+    ax_zenith_angle_cos.xaxis.set_major_formatter(
+        md.ConciseDateFormatter(ax_zenith_angle_cos.xaxis.get_major_locator()))
 
     ax2.legend()
     ax_zenith_angle.legend()
     ax_zenith_angle_cos.legend()
     plt.show()
 
+
 if __name__ == "__main__":
     # python3.10 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 46800
-    # python3.12 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 100
 
     parser = argparse.ArgumentParser(description='Create side lobes model for given target source')
     parser.add_argument('station', type=str, help='name of the station')
@@ -345,6 +354,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.station, args.rcumode, args.subband_min,  args.subband_max,  args.target_source,
+    main(args.station, args.rcumode, args.subband_min, args.subband_max, args.target_source,
          args.start_time, args.duration, args.clock, args.output_dir_name)
     sys.exit(0)
