@@ -8,7 +8,7 @@ from tqdm import tqdm
 def main():
     mydb = LofarAntennaDatabase()
 
-    rcu_modes_ = {"LBA":[1, 2, 3, 4], "HBA":[1, 2, 3, 4]}
+    rcu_modes_ = {"LBA":[1, 2, 3, 4], "HBA":[5,6,7]}
     subband_min = 0
     subband_max = 511
     source = "3C295"
