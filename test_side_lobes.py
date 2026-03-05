@@ -201,20 +201,20 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             # jones_i_ateam = (jones_xx_ateam + jones_yy_ateam) / 2
             jones_gain_ateam = get_jones_gain(jones_xx_ateam, jones_yy_ateam, jones_xy_ateam, jones_yx_ateam)
 
-            fig_jones_i, ax_jones_i = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-            ax_jones_i.set_title("jones " + a_team_source)
-            im1_jones_i = ax_jones_i.imshow(jones_gain_ateam, aspect="auto",
+            fig_jones_i_ateam, ax_jones_i_ateam = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax_jones_i_ateam.set_title("jones " + a_team_source)
+            im1_jones_i = ax_jones_i_ateam.imshow(jones_gain_ateam, aspect="auto",
                                             extent=[md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1],
                                                     freqs_[0]])
 
-            divider_jones_i = make_axes_locatable(ax_jones_i)
+            divider_jones_i = make_axes_locatable(ax_jones_i_ateam)
             cax1_ax_jones_i = divider_jones_i.append_axes("right", size="5%", pad=0.07)
-            plt.colorbar(im1_jones_i, ax=ax_jones_i, cax=cax1_ax_jones_i)
+            plt.colorbar(im1_jones_i, ax=ax_jones_i_ateam, cax=cax1_ax_jones_i)
 
-            ax_jones_i.xaxis_date()
-            ax_jones_i.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
-            ax_jones_i.set_ylabel("Frequencies [MHz]", fontweight='bold')
-            ax_jones_i.set_xlabel("Time", fontweight='bold')
+            ax_jones_i_ateam.xaxis_date()
+            ax_jones_i_ateam.xaxis.set_major_formatter(md.ConciseDateFormatter(ax_jones_i.xaxis.get_major_locator()))
+            ax_jones_i_ateam.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax_jones_i_ateam.set_xlabel("Time", fontweight='bold')
 
             dynspec, distance_phase_center, distance_dir = getDynspec(station, rcumode, a_team_source_sky_coords,
                                                                       phasedir,
@@ -299,6 +299,9 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
                   np.min(a_team_sum))
 
         # break
+        fig_jones_i_ateam.savefig(output_dir_name + "jones_i_" + a_team_source + ".png")
+        fig.savefig(output_dir_name + "dynspec_" + a_team_source + ".png")
+
         print("\n\n\n")
 
     fig_a_team_sum, ax_a_team_sum = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
@@ -334,7 +337,17 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
     ax2.legend()
     ax_zenith_angle.legend()
     ax_zenith_angle_cos.legend()
-    plt.show()
+
+    fig2.savefig(output_dir_name + "rad_dec.png")
+    fig_zenith_angle.savefig(output_dir_name + "zenith_angle.png")
+    fig_zenith_angle_cos.savefig(output_dir_name + "zenith_angle_cos.png")
+    fig_jones_i.savefig(output_dir_name + "jones_i.png")
+    fig_a_team_sum.savefig(output_dir_name + "a_team_sum.png")
+
+    plt.clf()
+    plt.cla()
+    plt.close("all")
+    #plt.show()
 
 
 if __name__ == "__main__":
