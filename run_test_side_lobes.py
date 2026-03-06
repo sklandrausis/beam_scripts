@@ -13,10 +13,11 @@ def main():
     subband_max = 511
     source = "3C295"
     start_time = "2025-01-02T15:00:16"
-    duration = 46800
+    duration = 60 * 60 # one hour observation
 
     processed_stations = []
     for station in tqdm(mydb.antennas):
+        #'''
         station_name  = station.station + station.antenna_type
         if station_name not in processed_stations:
             processed_stations.append(station_name)
@@ -35,6 +36,7 @@ def main():
             os.system("python3.10 test_side_lobes.py " + station_name + " " + str(mode) + " " + str(subband_min) +
                       " " + str(subband_max) + " " + source + " " + start_time + " " + str(duration)
                       + " --output_dir_name " + output_dir_name)
+        #'''
 
 
 if __name__ == "__main__":

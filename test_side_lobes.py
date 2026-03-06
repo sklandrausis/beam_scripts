@@ -101,6 +101,10 @@ def sb_to_freq(subband_min, subband_max, rcumode, clock):
 
 def main(station, rcumode, subband_min, subband_max, target_source, start_time, duration, clock=200,
          output_dir_name="/mnt/LOFAR0/beam_scripts/"):
+
+    station_type = station[-3:len(station)]
+    station_name = station[0:-3]
+
     # Frequency range
     freqs_ = sb_to_freq(subband_min, subband_max, rcumode, clock)
     freqs = freqs_ * 1000000  # Convert MHz to Hz
@@ -139,8 +143,8 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
     obstimestp = timedelta(seconds=1)
     obstimebeg = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
     pointingdir = (np.deg2rad(phasedir.ra.deg), np.deg2rad(phasedir.dec.deg), 'J2000')
-    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
-                                                                        'LBA', "Hamaker", obstimebeg,
+    samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', station_name,
+                                                                        station_type, "Hamaker", obstimebeg,
                                                                         timedelta(seconds=duration - 1), obstimestp,
                                                                         pointingdir)
 
@@ -181,8 +185,8 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
 
         pointingdir = (np.deg2rad(a_team_source_sky_coords.ra.deg), np.deg2rad(a_team_source_sky_coords.dec.deg),
                        'J2000')
-        samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', "LV614",
-                                                                            'LBA', "Hamaker", obstimebeg,
+        samptimes, freqs_joins, jones, jonesobj = on_pointing_axis_tracking('LOFAR', station_name,
+                                                                            station_type, "Hamaker", obstimebeg,
                                                                             timedelta(seconds=duration - 1), obstimestp,
                                                                             pointingdir)
 
