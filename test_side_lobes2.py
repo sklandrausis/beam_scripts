@@ -235,16 +235,16 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             dynspec_flux = np.copy(dynspec)
             print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
-            jones_ratio = np.abs(jones_ateam) / np.abs(jones_target)
+            jones_ratio = jones_ateam
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio),
                   np.min(jones_ratio))
 
             brightness_matrix = np.zeros(jones_ateam.shape)
 
-            brightness_matrix[:, :, 0, 0] = dynspec*np.conj(dynspec)
-            brightness_matrix[:, :, 1, 1] = dynspec*np.conj(dynspec)
+            brightness_matrix[:, :, 0, 0] = dynspec
+            brightness_matrix[:, :, 1, 1] = dynspec
 
-            brightness_matrix_  =  brightness_matrix *2
+            brightness_matrix_  =  brightness_matrix
 
             jones_h = np.conj(np.swapaxes(jones_ratio, -1, -2))
             jej_h = numpy.matmul(numpy.matmul(jones_ratio, brightness_matrix_), jones_h)
