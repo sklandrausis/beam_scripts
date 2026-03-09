@@ -245,7 +245,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             brightness_matrix_  =  brightness_matrix
 
             jones_h = np.conj(np.swapaxes(jones_ratio, -1, -2))
-            jej_h = numpy.matmul(numpy.matmul(jones_ratio, brightness_matrix_), jones_h)
+            jej_h = np.matmul(numpy.matmul(jones_ratio, brightness_matrix_), jones_h)
 
             jej_h_stokes_i =  np.abs(jej_h[:, :, 0, 0] +  jej_h[:, :, 1, 1])/2
             del dynspec, jones_h, brightness_matrix, jej_h, brightness_matrix_
