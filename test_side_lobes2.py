@@ -186,7 +186,7 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
         jones_xx_ateam = jones[:, :, 0, 0]
         jones_yy_ateam = jones[:, :, 1, 1]
 
-        del samptimes, freqs_joins, jonesobj
+        del samptimes, freqs_joins, jonesobj, jones
 
         print("JONES xx max, min for A-Team source " + a_team_source, np.max(jones_xx_ateam), np.min(jones_xx_ateam))
         if np.sum(jones_xx_ateam) != 0:
@@ -213,6 +213,25 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             dynspec, _, _ = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, Time(times), freqs * u.Hz)
             np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction", dynspec)
 
+
+
+            fig_dynspec, ax_dynspec = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+            ax_dynspec.set_title("dynspec " + a_team_source)
+            im1_dynspec = ax_dynspec.imshow(dynspec, aspect="auto",
+                                                  extent=(md.date2num(times[0]), md.date2num(times[-1]), freqs_[-1],
+                                                          freqs_[0]))
+
+            divider_dynspec = make_axes_locatable(ax_dynspec)
+            cax1_ax_dynspec = divider_dynspec.append_axes("right", size="5%", pad=0.07)
+            plt.colorbar(im1_dynspec, ax=ax_dynspec, cax=cax1_ax_dynspec)
+
+            ax_dynspec.xaxis_date()
+            ax_dynspec.xaxis.set_major_formatter(
+                md.ConciseDateFormatter(ax_dynspec.xaxis.get_major_locator()))
+            ax_dynspec.set_ylabel("Frequencies [MHz]", fontweight='bold')
+            ax_dynspec.set_xlabel("Time", fontweight='bold')
+
+
             dynspec_flux = np.copy(dynspec)
             print("SIDE LOBES model max, min for A-Team source " + a_team_source, np.max(dynspec), np.min(dynspec))
 
@@ -220,16 +239,18 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             print("jones_ratio model max, min for A-Team source " + a_team_source, np.max(jones_ratio),
                   np.min(jones_ratio))
 
-            brightness_matrix = np.zeros(jones_ateam.shape, dtype=complex)
+            brightness_matrix = np.zeros(jones_ateam.shape)
 
-            brightness_matrix[:, :, 0, 0] = dynspec * 2
-            brightness_matrix[:, :, 1, 1] = dynspec * 2
+            brightness_matrix[:, :, 0, 0] = dynspec*np.conj(dynspec)
+            brightness_matrix[:, :, 1, 1] = dynspec*np.conj(dynspec)
+
+            brightness_matrix_  =  brightness_matrix *2
 
             jones_h = np.conj(np.swapaxes(jones_ratio, -1, -2))
-            jej_h = numpy.matmul(numpy.matmul(jones_ratio, brightness_matrix), jones_h)
+            jej_h = numpy.matmul(numpy.matmul(jones_ratio, brightness_matrix_), jones_h)
 
             jej_h_stokes_i =  np.abs(jej_h[:, :, 0, 0] +  jej_h[:, :, 1, 1])/2
-            del dynspec, jones_h, brightness_matrix, jej_h
+            del dynspec, jones_h, brightness_matrix, jej_h, brightness_matrix_
 
             a_team_sum_before_flux += jej_h_stokes_i
             print("corrected beam model max, min for A-Team source " + a_team_source,
