@@ -213,8 +213,6 @@ def main(station, rcumode, subband_min, subband_max, target_source, start_time, 
             dynspec, _, _ = getDynspec(station, rcumode, a_team_source_sky_coords, phasedir, Time(times), freqs * u.Hz)
             np.save(output_dir_name + a_team_source.replace(" ", "") + "before_correction", dynspec)
 
-
-
             fig_dynspec, ax_dynspec = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
             ax_dynspec.set_title("dynspec " + a_team_source)
             im1_dynspec = ax_dynspec.imshow(dynspec, aspect="auto",
