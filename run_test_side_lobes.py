@@ -8,12 +8,11 @@ from tqdm import tqdm
 def main():
     mydb = LofarAntennaDatabase()
 
-    rcu_modes_ = {"LBA":[1, 2, 3, 4], "HBA":[5,6,7]}
-    subband_min = 0
-    subband_max = 511
+    rcu_modes_ = {"LBA":[3], "HBA":[5, 7]}
     source = "3C295"
     start_time = "2025-01-02T15:00:16"
     duration = 60 * 60 # one hour observation
+    subbands = {"3":[51, 561], "5":[51, 461], "7":[51, 358]}
 
     processed_stations = []
     for station in tqdm(mydb.antennas):
@@ -29,11 +28,14 @@ def main():
             output_dir_name = "./" + station.station + "/" + station.antenna_type + "/rcu_mode"  + str(mode)  + "/"
             os.system("mkdir -p " + output_dir_name)
 
+            subband_min = subbands[str(mode)][0]
+            subband_max = subbands[str(mode)][1]
+
             # python3.10 test_side_lobes.py LV614LBA 3 150 311  3C295 2025-01-02T15:00:16 46800
-            print("python3.10 test_side_lobes.py " + station_name + " " + str(mode) + " " + str(subband_min) +
+            print("python3.10 test_side_lobes2.py " + station_name + " " + str(mode) + " " + str(subband_min) +
                   " " + str(subband_max) + " " + source + " " + start_time + " " + str(duration)
                   + " --output_dir_name " + output_dir_name)
-            os.system("python3.10 test_side_lobes.py " + station_name + " " + str(mode) + " " + str(subband_min) +
+            os.system("python3.10 test_side_lobes2.py " + station_name + " " + str(mode) + " " + str(subband_min) +
                       " " + str(subband_max) + " " + source + " " + start_time + " " + str(duration)
                       + " --output_dir_name " + output_dir_name)
         #'''
