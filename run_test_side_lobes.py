@@ -12,7 +12,7 @@ def main():
     source = "3C295"
     start_time = "2025-01-02T15:00:16"
     duration = 60 * 60 # one hour observation
-    subbands = {"3":[51, 561], "5":[51, 461], "7":[51, 358]}
+    subbands = {"3":[51, 461], "5":[51, 461], "7":[51, 358]}
 
     processed_stations = []
     for station in tqdm(mydb.antennas):
@@ -38,6 +38,7 @@ def main():
             os.system("python3.10 test_side_lobes2.py " + station_name + " " + str(mode) + " " + str(subband_min) +
                       " " + str(subband_max) + " " + source + " " + start_time + " " + str(duration)
                       + " --output_dir_name " + output_dir_name)
+        #sys.exit(0)
         #'''
 
 
