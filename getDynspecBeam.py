@@ -1,10 +1,11 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy.coordinates import ITRS, EarthLocation, AltAz, SkyCoord
 from astropy.time import Time
 import astropy.units as u
 from astropy.constants import c
 
-from lofarimaging import singlestationutil as stu
+from lofarimaging import singlestationutil as stu, rcus_in_station, get_full_station_name
 import casacore.tables as pt
 
 import lofarantpos.geo as lofargeo
@@ -108,22 +109,55 @@ def getPower( distance_dir: np.ndarray, distance_phase_center: np.ndarray, freqs
     return np.abs(A)/dph.shape[-1]
 
 
+def getDynspec_hba_title(station:str, rcumode:int, radec:SkyCoord, phasedir:SkyCoord, times:Time, freqs:u.Quantity):
+    station_pqr = mydb.hba_dipole_pqr(station)
+    rotation = mydb.rotation_from_north(station)
+
+    pqr_to_xyz = np.array([[np.cos(-rotation), -np.sin(-rotation), 0],
+                           [np.sin(-rotation), np.cos(-rotation), 0],
+                           [0, 0, 1]])
+
+    station_xyz = (pqr_to_xyz @ station_pqr.T).T
+    etrs_to_local_north_hba_tile = mydb.hba_dipole_pqr(station) @ mydb.hba_dipole_etrs(station).T
+
+    ref_pos = EarthLocation.from_geocentric(
+        *mydb.phase_centres[station],
+        unit=u.m
+    )
+
+    #distance_phase_center = getRaDecBeam(station_pqr, phasedir, times, etrs_to_local_north_hba_tile, ref_pos)
+
+
+    return station_xyz
+
+
 def getDynspec( station:str, rcumode:int, radec:SkyCoord, phasedir:SkyCoord, times:Time, freqs:u.Quantity ) :
     antpos, _ = stu.get_station_xyz(
         station,
         rcumode,
         mydb
     )
-    
+
+    station_pqr = mydb.hba_dipole_pqr(station)
+    rotation = mydb.rotation_from_north(station)
+
+    pqr_to_xyz = np.array([[np.cos(-rotation), -np.sin(-rotation), 0],
+                           [np.sin(-rotation), np.cos(-rotation), 0],
+                           [0, 0, 1]])
+
+    station_xyz = (pqr_to_xyz @ station_pqr.T).T
+
     ref_pos = EarthLocation.from_geocentric(
         *mydb.phase_centres[station],
         unit=u.m
     )
+
     etrs_to_local_north = mydb.pqr_to_localnorth(station) @ mydb.pqr_to_etrs[station].T
     
-    distance_phase_center = getRaDecBeam( antpos, phasedir, times, etrs_to_local_north, ref_pos )
-    distance_dir = getRaDecBeam( antpos, radec, times, etrs_to_local_north, ref_pos )
+    distance_phase_center = getRaDecBeam( station_xyz, phasedir, times, etrs_to_local_north, ref_pos )
+    distance_dir = getRaDecBeam( station_xyz, radec, times, etrs_to_local_north, ref_pos )
     dynspec = getPower( distance_dir.T, distance_phase_center.T, freqs, common_axis=True )
+
     return dynspec, distance_phase_center, distance_dir
 
 def getBeamPower( station: str, rcumode:int, azel:AltAz, phasedir:SkyCoord, times:Time, freqs:u.Quantity, MSname='') :
